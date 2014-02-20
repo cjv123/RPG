@@ -8,7 +8,9 @@
 using namespace cocos2d;
 
 #include "marshal.h"
-#include "../RMSceneCache.h"
+#include "../SceneMain.h"
+#include <pthread.h>
+#include "../ThreadHandlerManager.h"
 
 MRB_FUNCTION(kernelEval)
 {
@@ -143,8 +145,11 @@ MRB_FUNCTION(kernelLoadData)
 	const char *filename;
 	mrb_get_args(mrb, "z", &filename);
 
+	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
+	string filepath = writepath + filename;
+
 	unsigned long size;
-	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filename,"rb",&size);
+	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(),"rb",&size);
 	mrb_value ret = mrb_marshal_load(mrb,(char*)data,size);
 	delete [] data;
 
@@ -153,7 +158,23 @@ MRB_FUNCTION(kernelLoadData)
 
 MRB_FUNCTION(kernelSaveData)
 {
+	mrb_value obj;
+	const char *filename;
+	mrb_get_args(mrb, "oz", &obj, &filename);
 
+	RClass* const mod = mrb_module_get(mrb, "Marshal");
+	mrb_value result = mrb_funcall(mrb, mrb_obj_value(mod), "dump", 1, obj);
+
+	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
+	string filepath = writepath + filename;
+	char* data = RSTRING_PTR(result);
+	long len = RSTRING_LEN(result);
+	FILE* fp = fopen(filepath.c_str(),"wb");
+	if (NULL!=fp)
+	{
+		fwrite(data,sizeof(char),len,fp);
+		fclose(fp);
+	}
 
 	return mrb_nil_value();
 }
@@ -164,21 +185,6 @@ MRB_FUNCTION(kernelInteger)
 	mrb_get_args(mrb, "o", &obj);
 
 	return mrb_to_int(mrb, obj);
-}
-
-MRB_FUNCTION(test_draw)
-{
-	pthread_mutex_lock(&s_draw_cache_mutex);
-	
-	RMSceneCache* scene = RMSceneCache::getInstance();
-	//scene->begin();
-	CCSprite* sp = CCSprite::create("CloseNormal.png");
-	sp->setPosition(ccp(100,100));
-	//sp->visit();
-	//scene->end();
-	return mrb_nil_value();
-
-	pthread_mutex_unlock(&s_draw_cache_mutex);
 }
 
 void kernelBindingInit(mrb_state *mrb)
@@ -195,5 +201,4 @@ void kernelBindingInit(mrb_state *mrb)
 	mrb_define_module_function(mrb, module, "save_data", kernelSaveData, MRB_ARGS_REQ(2));
 	mrb_define_module_function(mrb, module, "Integer", kernelInteger, MRB_ARGS_REQ(1));
 
-	mrb_define_module_function(mrb, module, "test_draw", test_draw, MRB_ARGS_NONE());
 }

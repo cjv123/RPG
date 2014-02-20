@@ -30,11 +30,17 @@
     <ClCompile Include="..\Classes\binding-mruby\marshal.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\binding-mruby\module_rpg.h">
+    <ClCompile Include="..\Classes\binding-mruby\module_rpg.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\RMSceneCache.cpp">
+    <ClCompile Include="..\Classes\ThreadHandlerManager.cpp">
       <Filter>Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\rect-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\color-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,8 +65,14 @@
     <ClInclude Include="..\Classes\binding-mruby\boost-hash.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\RMSceneCache.h">
+    <ClInclude Include="..\Classes\ThreadHandlerManager.h">
       <Filter>Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\marshal.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\binding-types.h">
+      <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

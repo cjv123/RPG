@@ -3,8 +3,6 @@
 #include "CCEGLView.h"
 USING_NS_CC;
 
-extern char* module_rpg;
-
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,

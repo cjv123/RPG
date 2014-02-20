@@ -9,7 +9,7 @@ class SceneMain : public CCLayer
 public:
 	CREATE_FUNC(SceneMain);
 	static CCScene* scene();
-
+	static CCLayer* getMainLayer();
 	virtual bool init();
 protected:
 	virtual void update(float delta);

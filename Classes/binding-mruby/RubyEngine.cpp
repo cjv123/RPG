@@ -2,7 +2,6 @@
 #include "kernel.h"
 #include "marshal.h"
 
-#include "module_rpg.h"
 #include <string.h>
 #include <mruby/value.h>
 #include <mruby/string.h>
@@ -14,11 +13,8 @@ using namespace cocos2d;
 #include <zlib.h>
 #include <pthread.h>
 
-inline MrbData*
-	getMrbData(mrb_state *mrb)
-{
-	return static_cast<MrbData*>(mrb->ud);
-}
+extern void rectBindingInit(mrb_state* mrb);
+extern void colorBindingInit(mrb_state* mrb);
 
 static const char *
 	mrbValueString(mrb_value value)
@@ -34,11 +30,14 @@ mrb_state* RubyEngine::initAll()
 	return mrb; 
 }
 
+extern char module_rpg[];
+extern unsigned int module_rpg_len;
+
 mrb_state* RubyEngine::initRubyEngine()
 {
 	m_mrb= mrb_open();
 
-	//runScript((char*)module_rpg);
+//	runScript(module_rpg);
 
 	return m_mrb;
 }
@@ -47,6 +46,8 @@ void RubyEngine::initBindingMethod()
 {
 	mrb_mruby_marshal_gem_init(m_mrb);
 	kernelBindingInit(m_mrb);
+	rectBindingInit(m_mrb);
+	colorBindingInit(m_mrb);
 }
 
 mrb_state* RubyEngine::getMrbState()
@@ -149,9 +150,11 @@ void RubyEngine::initRMXPScript( const char* filename )
 }
 
 static pthread_t s_networkThread;
+pthread_mutex_t s_thread_handler_mutex;
 
 void RubyEngine::runRMXPScript()
 {
+	pthread_mutex_init(&s_thread_handler_mutex, NULL);
 	pthread_create(&s_networkThread, NULL, networkThread, (void*)this);
 	pthread_detach(s_networkThread);
 }
@@ -168,6 +171,8 @@ void* RubyEngine::networkThread( void* data )
 
 	mrb_close(engine->m_mrb);
 	pthread_exit(0);
+
+	pthread_mutex_destroy(&s_thread_handler_mutex);
 
 	return 0;
 }

@@ -1,22 +1,63 @@
+#include "bitmap.h"
+#include "font.h"
+#include "exception.h"
+#include "disposable-binding.h"
 #include "binding-util.h"
+#include "binding-types.h"
+
+#define DISP_CLASS_NAME "bitmap"
+
+DEF_TYPE(Bitmap);
 
 MRB_METHOD(bitmapInitialize)
 {
-	
+	Bitmap *b = 0;
+
+	if (mrb->c->ci->argc == 1)
+	{
+		char *filename;
+		mrb_get_args(mrb, "z", &filename);
+
+		GUARD_EXC( b = new Bitmap(filename); )
+	}
+	else
+	{
+		mrb_int width, height;
+		mrb_get_args(mrb, "ii", &width, &height);
+
+		GUARD_EXC( b = new Bitmap(width, height); )
+	}
+
+	setPrivateData(mrb, self, b, BitmapType);
+
+	/* Wrap properties */
+	Font *font = new Font();
+	b->setFont(font);
+	font->setColor(new Color(*font->getColor()));
+
+	wrapProperty(mrb, self, font, CSfont, FontType);
+	wrapProperty(mrb, getProperty(mrb, self, CSfont), font->getColor(), CScolor, ColorType);
 
 	return self;
 }
 
 MRB_METHOD(bitmapWidth)
 {
+	Bitmap *b = getPrivateData<Bitmap>(mrb, self);
+
 	mrb_int value = 0;
+	GUARD_EXC( value = b->width(); )
 
 	return mrb_fixnum_value(value);
 }
 
 MRB_METHOD(bitmapHeight)
 {
+	Bitmap *b = getPrivateData<Bitmap>(mrb, self);
+
 	mrb_int value = 0;
+	GUARD_EXC( value = b->height(); )
+
 	return mrb_fixnum_value(value);
 }
 
@@ -27,7 +68,7 @@ MRB_METHOD(bitmapRect)
 	IntRect rect;
 	GUARD_EXC( rect = b->rect(); )
 
-		Rect *r = new Rect(rect);
+	Rect *r = new Rect(rect);
 
 	return wrapObject(mrb, r, RectType);
 }
@@ -51,7 +92,7 @@ MRB_METHOD(bitmapBlt)
 
 	GUARD_EXC( b->blt(x, y, *src, srcRect->toIntRect(), opacity); )
 
-		return mrb_nil_value();
+	return mrb_nil_value();
 }
 
 MRB_METHOD(bitmapStretchBlt)
@@ -74,7 +115,7 @@ MRB_METHOD(bitmapStretchBlt)
 
 	GUARD_EXC( b->stretchBlt(destRect->toIntRect(), *src, srcRect->toIntRect(), opacity); )
 
-		return mrb_nil_value();
+	return mrb_nil_value();
 }
 
 MRB_METHOD(bitmapFillRect)
@@ -116,7 +157,7 @@ MRB_METHOD(bitmapClear)
 
 	GUARD_EXC( b->clear(); )
 
-		return mrb_nil_value();
+	return mrb_nil_value();
 }
 
 MRB_METHOD(bitmapGetPixel)
@@ -129,13 +170,13 @@ MRB_METHOD(bitmapGetPixel)
 
 	GUARD_EXC(
 		if (x < 0 || y < 0 || x >= b->width() || y >= b->height())
-			return mrb_nil_value();
-	)
+	            return mrb_nil_value();
+	         )
 
-		Vec4 value;
+	Vec4 value;
 	GUARD_EXC( value = b->getPixel(x, y); )
 
-		Color *color = new Color(value);
+	Color *color = new Color(value);
 
 	return wrapObject(mrb, color, ColorType);
 }
@@ -155,7 +196,7 @@ MRB_METHOD(bitmapSetPixel)
 
 	GUARD_EXC( b->setPixel(x, y, color->norm); )
 
-		return mrb_nil_value();
+	return mrb_nil_value();
 }
 
 MRB_METHOD(bitmapHueChange)
@@ -168,7 +209,7 @@ MRB_METHOD(bitmapHueChange)
 
 	GUARD_EXC( b->hueChange(hue); )
 
-		return mrb_nil_value();
+	return mrb_nil_value();
 }
 
 MRB_METHOD(bitmapDrawText)
@@ -213,7 +254,7 @@ MRB_METHOD(bitmapTextSize)
 	IntRect value;
 	GUARD_EXC( value = b->textSize(str); )
 
-		Rect *rect = new Rect(value);
+	Rect *rect = new Rect(value);
 
 	return wrapObject(mrb, rect, RectType);
 }
@@ -238,7 +279,7 @@ MRB_METHOD(bitmapSetFont)
 	font = getPrivateDataCheck<Font>(mrb, fontObj, FontType);
 
 	GUARD_EXC( b->setFont(font); )
-		setProperty(mrb, self, CSfont, fontObj);
+	setProperty(mrb, self, CSfont, fontObj);
 
 	return mrb_nil_value();
 }
@@ -246,10 +287,9 @@ MRB_METHOD(bitmapSetFont)
 CLONE_FUN(Bitmap)
 
 
-	void
-	bitmapBindingInit(mrb_state *mrb)
+void bitmapBindingInit(mrb_state *mrb)
 {
-	RClass *klass = mrb_define_class(mrb, "Bitmap", 0);
+	RClass *klass = mrb_define_class(mrb, "Bitmap", mrb_class_get(mrb,"Object"));
 
 	disposableBindingInit<Bitmap>(mrb, klass);
 

@@ -13,11 +13,12 @@ using namespace cocos2d;
 #include <zlib.h>
 #include <pthread.h>
 
-extern void rectBindingInit(mrb_state* mrb);
-extern void colorBindingInit(mrb_state* mrb);
+extern void etcBindingInit(mrb_state *mrb);
+extern void fontBindingInit(mrb_state* mrb);
+extern void bitmapBindingInit(mrb_state *mrb);
+extern void spriteBindingInit(mrb_state *mrb);
 
-static const char *
-	mrbValueString(mrb_value value)
+static const char * mrbValueString(mrb_value value)
 {
 	return mrb_string_p(value) ? RSTRING_PTR(value) : 0;
 }
@@ -37,7 +38,8 @@ mrb_state* RubyEngine::initRubyEngine()
 {
 	m_mrb= mrb_open();
 
-//	runScript(module_rpg);
+	static MrbData mrbData(m_mrb);
+	m_mrb->ud = &mrbData;
 
 	return m_mrb;
 }
@@ -46,8 +48,11 @@ void RubyEngine::initBindingMethod()
 {
 	mrb_mruby_marshal_gem_init(m_mrb);
 	kernelBindingInit(m_mrb);
-	rectBindingInit(m_mrb);
-	colorBindingInit(m_mrb);
+
+	etcBindingInit(m_mrb);
+	fontBindingInit(m_mrb);
+	bitmapBindingInit(m_mrb);
+	spriteBindingInit(m_mrb);
 }
 
 mrb_state* RubyEngine::getMrbState()
@@ -85,9 +90,6 @@ void RubyEngine::showExcMessageBox(mrb_value exc)
 void RubyEngine::runScript(const char* script )
 {
 	int len = strlen(script);
-
-	MrbData mrbData(m_mrb);
-	m_mrb->ud = &mrbData;
 
 	mrbc_context *ctx = mrbc_context_new(m_mrb);
 	ctx->capture_errors = 1;

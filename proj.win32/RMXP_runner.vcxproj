@@ -129,12 +129,19 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Classes\AppDelegate.cpp" />
-    <ClCompile Include="..\Classes\binding-mruby\color-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\binding-util.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\bitmap-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\bitmap.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\etc-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\etc.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\font-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\font.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\kernel.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\marshal.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\module_rpg.cpp" />
-    <ClCompile Include="..\Classes\binding-mruby\rect-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\RubyEngine.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\sprite-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\sprite.cpp" />
     <ClCompile Include="..\Classes\SceneMain.cpp" />
     <ClCompile Include="..\Classes\ThreadHandlerManager.cpp" />
     <ClCompile Include="main.cpp" />
@@ -143,10 +150,16 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClInclude Include="..\Classes\AppDelegate.h" />
     <ClInclude Include="..\Classes\binding-mruby\binding-types.h" />
     <ClInclude Include="..\Classes\binding-mruby\binding-util.h" />
+    <ClInclude Include="..\Classes\binding-mruby\bitmap.h" />
     <ClInclude Include="..\Classes\binding-mruby\boost-hash.h" />
+    <ClInclude Include="..\Classes\binding-mruby\disposable-binding.h" />
+    <ClInclude Include="..\Classes\binding-mruby\disposable.h" />
+    <ClInclude Include="..\Classes\binding-mruby\etc.h" />
+    <ClInclude Include="..\Classes\binding-mruby\font.h" />
     <ClInclude Include="..\Classes\binding-mruby\kernel.h" />
     <ClInclude Include="..\Classes\binding-mruby\marshal.h" />
     <ClInclude Include="..\Classes\binding-mruby\RubyEngine.h" />
+    <ClInclude Include="..\Classes\binding-mruby\sprite.h" />
     <ClInclude Include="..\Classes\SceneMain.h" />
     <ClInclude Include="..\Classes\ThreadHandlerManager.h" />
     <ClInclude Include="main.h" />

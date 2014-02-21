@@ -36,10 +36,31 @@
     <ClCompile Include="..\Classes\ThreadHandlerManager.cpp">
       <Filter>Classes</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\binding-mruby\rect-binding.cpp">
+    <ClCompile Include="..\Classes\binding-mruby\etc-binding.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\binding-mruby\color-binding.cpp">
+    <ClCompile Include="..\Classes\binding-mruby\etc.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\binding-util.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\font-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\font.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\bitmap.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\bitmap-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\sprite-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\sprite.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
   </ItemGroup>
@@ -72,6 +93,24 @@
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\binding-mruby\binding-types.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\etc.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\font.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\bitmap.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\disposable-binding.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\disposable.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\sprite.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>

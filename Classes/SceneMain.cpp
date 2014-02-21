@@ -26,13 +26,10 @@ bool SceneMain::init()
 	RubyEngine* engine = new RubyEngine;
 	mrb_state* mrb = engine->initAll();
 
-	engine->runScript("c = Color.new(122,156,255,144)\np c.red\np c.green\np c.blue\np c.alpha\n");
-	engine->checkException();
+	engine->initRMXPScript("Data/Scripts.rxdata");
+	engine->runRMXPScript();
 
-// 	engine->initRMXPScript("Data/Scripts.rxdata");
-// 	engine->runRMXPScript();
-// 
-// 	scheduleUpdate();
+	scheduleUpdate();
 
 	return true;
 }

@@ -63,6 +63,15 @@
     <ClCompile Include="..\Classes\binding-mruby\sprite.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\viewport.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\viewport-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\graphics-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -111,6 +120,12 @@
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\binding-mruby\sprite.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\viewport.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\flashable-binding.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>

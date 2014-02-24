@@ -17,6 +17,7 @@ extern void etcBindingInit(mrb_state *mrb);
 extern void fontBindingInit(mrb_state* mrb);
 extern void bitmapBindingInit(mrb_state *mrb);
 extern void spriteBindingInit(mrb_state *mrb);
+extern void graphicsBindingInit(mrb_state *mrb);
 
 static const char * mrbValueString(mrb_value value)
 {
@@ -50,6 +51,7 @@ void RubyEngine::initBindingMethod()
 	kernelBindingInit(m_mrb);
 
 	etcBindingInit(m_mrb);
+	graphicsBindingInit(m_mrb);
 	fontBindingInit(m_mrb);
 	bitmapBindingInit(m_mrb);
 	spriteBindingInit(m_mrb);

@@ -96,6 +96,10 @@ public:
 	CCSprite* getEmuBitmap();
 private:
 	static int handler_method_create_sprite(int bitmap_instance ,void* filename);
+	static int handler_method_blt(int ptr1,void* ptr2);
+	static int handler_method_clear(int ptr1,void* ptr2);
+	static int handler_method_fill(int prt1, void* ptr2);
+	static int handler_method_drawtext(int ptr1,void* ptr2);
 
 	virtual void releaseResources();
 
@@ -104,6 +108,7 @@ private:
 	float m_width;
 	float m_height;
 	BitmapPrivate *p;
+	IntRect m_TextRect;
 };
 
 #endif // BITMAP_H

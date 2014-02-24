@@ -3,6 +3,7 @@
 
 #include "disposable.h"
 #include "util.h"
+#include "viewport.h"
 
 class Bitmap;
 struct Color;
@@ -14,7 +15,7 @@ struct SpritePrivate;
 class Sprite : public Disposable
 {
 public:
-	Sprite();
+	Sprite(Viewport *viewport = 0);
 	~Sprite();
 
 	int getWidth()  const;
@@ -36,8 +37,16 @@ public:
 	DECL_ATTR( BlendType,   int     )
 	DECL_ATTR( Color,       Color*  )
 	DECL_ATTR( Tone,        Tone*   )
+	DECL_ATTR(Viewport,     Viewport*)
 
+	void flash(Color* color,int duration);
+	void update();
 private:
+	static int handler_method_set_mirror(int ptr1,void* ptr2);
+	static int handler_method_set_opacity(int ptr1,void* ptr2);
+	static int handler_method_set_srcrect(int prt1,void* ptr2);
+	static int handler_method_set_prop(int ptr1,void* ptr2);
+
 	SpritePrivate *p;
 
 	void draw();

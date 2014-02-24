@@ -25,12 +25,36 @@ MRB_METHOD(spriteInitialize)
 	return self;
 }
 
+MRB_METHOD(flashableFlash)
+{
+	Sprite *s = getPrivateData<Sprite>(mrb, self);
+
+	mrb_value colorObj;
+	Color *color;
+	int duration;
+
+	mrb_get_args(mrb, "oi", &colorObj,&duration);
+	color = getPrivateDataCheck<Color>(mrb, colorObj, ColorType);
+
+	GUARD_EXC( s->flash(color,duration); )
+
+	return mrb_nil_value();
+}
+
+MRB_METHOD(flashableUpdate)
+{
+	Sprite *s = getPrivateData<Sprite>(mrb, self);
+	GUARD_EXC( s->update(); )
+	return mrb_nil_value();
+}
+
 #define DISP_CLASS_NAME "sprite"
 
 DEF_PROP_OBJ_NIL(Sprite, Bitmap, Bitmap,  CSbitmap)
 DEF_PROP_OBJ(Sprite, Rect,   SrcRect, CSsrc_rect)
 DEF_PROP_OBJ(Sprite, Color,  Color,   CScolor)
 DEF_PROP_OBJ(Sprite, Tone,   Tone,    CStone)
+DEF_PROP_OBJ(Sprite,Viewport,Viewport,CSviewport)
 
 DEF_PROP_I(Sprite, X)
 DEF_PROP_I(Sprite, Y)
@@ -69,6 +93,10 @@ void spriteBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Sprite, BlendType, "blend_type" );
 	INIT_PROP_BIND( Sprite, Color,     "color"      );
 	INIT_PROP_BIND( Sprite, Tone,      "tone"       );
+	INIT_PROP_BIND(Sprite,Viewport,"viewport");
+	
+	mrb_define_method(mrb, klass, "flash", flashableFlash, MRB_ARGS_REQ(2));
+	mrb_define_method(mrb, klass, "update", flashableUpdate, MRB_ARGS_NONE());
 
 	mrb_define_method(mrb, klass, "inspect", inspectObject, MRB_ARGS_NONE());
 }

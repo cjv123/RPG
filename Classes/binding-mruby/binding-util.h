@@ -211,6 +211,7 @@ getMrbData(mrb_state *mrb)
 	mrb_define_method(mrb, klass, prop_name_s "=", Klass##Set##PropName, MRB_ARGS_REQ(1)); \
 }
 
+
 static inline mrb_value
 mrb__float_value(mrb_float f)
 {
@@ -236,6 +237,9 @@ getPrivateData(mrb_state *mrb, mrb_value self)
 
 	return static_cast<T*>(DATA_PTR(priv));
 }
+
+
+
 
 template<typename T>
 inline T *
@@ -365,6 +369,11 @@ objectLoad(mrb_state *mrb, mrb_value self, const mrb_data_type &type)
 	setPrivateData(mrb, obj_value, c, type);
 
 	return obj_value;
+}
+
+inline float rgss_y_to_cocos_y(int y,int h)
+{
+	return (float)(h - y);
 }
 
 MRB_METHOD_PUB(inspectObject);

@@ -5,6 +5,9 @@
 #include "util.h"
 #include "etc.h"
 
+#include <cocos2d.h>
+using namespace cocos2d;
+
 struct ViewportPrivate;
 
 class Viewport : public Disposable
@@ -29,6 +32,8 @@ private:
 	bool isEffectiveViewport(Rect *&, Color *&, Tone *&) const;
 
 	void releaseResources();
+
+	static int handler_method_composite(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
 	friend struct ViewportPrivate;

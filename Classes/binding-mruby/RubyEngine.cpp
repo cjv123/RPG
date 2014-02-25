@@ -13,11 +13,16 @@ using namespace cocos2d;
 #include <zlib.h>
 #include <pthread.h>
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 extern void etcBindingInit(mrb_state *mrb);
 extern void fontBindingInit(mrb_state* mrb);
 extern void bitmapBindingInit(mrb_state *mrb);
 extern void spriteBindingInit(mrb_state *mrb);
 extern void graphicsBindingInit(mrb_state *mrb);
+extern void viewportBindingInit(mrb_state *mrb);
 
 static const char * mrbValueString(mrb_value value)
 {
@@ -55,6 +60,7 @@ void RubyEngine::initBindingMethod()
 	fontBindingInit(m_mrb);
 	bitmapBindingInit(m_mrb);
 	spriteBindingInit(m_mrb);
+	viewportBindingInit(m_mrb);
 }
 
 mrb_state* RubyEngine::getMrbState()
@@ -158,6 +164,7 @@ pthread_mutex_t s_thread_handler_mutex;
 
 void RubyEngine::runRMXPScript()
 {
+	m_runRMXP = true;
 	pthread_mutex_init(&s_thread_handler_mutex, NULL);
 	pthread_create(&s_networkThread, NULL, networkThread, (void*)this);
 	pthread_detach(s_networkThread);
@@ -179,4 +186,14 @@ void* RubyEngine::networkThread( void* data )
 	pthread_mutex_destroy(&s_thread_handler_mutex);
 
 	return 0;
+}
+
+RubyEngine::RubyEngine() : m_runRMXP(false)
+{
+
+}
+
+bool RubyEngine::getRunRMXP()
+{
+	return m_runRMXP;
 }

@@ -38,6 +38,7 @@ public:
 	DECL_ATTR( Color,       Color*  )
 	DECL_ATTR( Tone,        Tone*   )
 	DECL_ATTR(Viewport,     Viewport*)
+	DECL_ATTR(Visible,     bool)
 
 	void flash(Color* color,int duration);
 	void update();

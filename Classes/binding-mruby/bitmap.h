@@ -94,6 +94,7 @@ public:
 	void bindTex(ShaderBase &shader);
 
 	CCSprite* getEmuBitmap();
+	std::string getFilename();
 private:
 	static int handler_method_create_sprite(int bitmap_instance ,void* filename);
 	static int handler_method_blt(int ptr1,void* ptr2);

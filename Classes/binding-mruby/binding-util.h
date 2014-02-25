@@ -371,6 +371,28 @@ objectLoad(mrb_state *mrb, mrb_value self, const mrb_data_type &type)
 	return obj_value;
 }
 
+template<class C>
+static C *
+	viewportElementInitialize(mrb_state *mrb, mrb_value self)
+{
+	/* Get parameters */
+	mrb_value viewportObj = mrb_nil_value();
+	Viewport *viewport = 0;
+
+	mrb_get_args(mrb, "|o", &viewportObj);
+
+	if (!mrb_nil_p(viewportObj))
+		viewport = getPrivateDataCheck<Viewport>(mrb, viewportObj, ViewportType);
+
+	/* Construct object */
+	C *ve = new C(viewport);
+
+	/* Set property objects */
+	setProperty(mrb, self, CSviewport, viewportObj);
+
+	return ve;
+}
+
 inline float rgss_y_to_cocos_y(int y,int h)
 {
 	return (float)(h - y);

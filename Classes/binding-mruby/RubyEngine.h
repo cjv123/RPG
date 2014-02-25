@@ -15,6 +15,7 @@ using namespace std;
 class RubyEngine
 {
 public:
+	RubyEngine();
 	mrb_state* initAll();
 	mrb_state* initRubyEngine();
 	void initBindingMethod();
@@ -32,10 +33,13 @@ public:
 	vector<RMXPScript> m_RMXPScripts;
 	void initRMXPScript(const char* filename);
 	void runRMXPScript();
+	bool getRunRMXP();
 private:
 	static void* networkThread(void* data);
+	
 
 	mrb_state* m_mrb;
+	bool m_runRMXP;
 };
 
 #endif

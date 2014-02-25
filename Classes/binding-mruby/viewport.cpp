@@ -2,6 +2,9 @@
 
 #include "etc.h"
 #include "util.h"
+#include "../ThreadHandlerManager.h"
+#include "binding-util.h"
+#include "../SceneMain.h"
 
 struct ViewportPrivate
 {
@@ -23,17 +26,18 @@ struct ViewportPrivate
 
 	ViewportPrivate(int x, int y, int width, int height, Viewport *self)
 	    : self(self),
-	      rect(&tmp.rect),
-	      color(&tmp.color),
-	      tone(&tmp.tone),
-	      isOnScreen(false)
+		rect(&tmp.rect),
+		color(&tmp.color),
+		tone(&tmp.tone),
+		isOnScreen(false),ox(0),oy(0)
 	{
-		rect->set(x, y, width, height);
+		rect->set(x,y,width,height);
 		updateRectCon();
 	}
 
 	~ViewportPrivate()
 	{
+		
 	}
 
 	void onRectChange()
@@ -60,17 +64,19 @@ struct ViewportPrivate
 
 Viewport::Viewport(int x, int y, int width, int height)
 {
-	initViewport(x, y, width, height);
+	initViewport(x,y,width,height);
+	
 }
 
-Viewport::Viewport(Rect *rect)
+Viewport::Viewport(Rect *rect) 
 {
-	initViewport(rect->x, rect->y, rect->width, rect->height);
+	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
 
 void Viewport::initViewport(int x, int y, int width, int height)
 {
-	
+	p = new ViewportPrivate(x,y,width,height,this);
+	composite();
 }
 
 Viewport::~Viewport()
@@ -89,34 +95,39 @@ DEF_ATTR_SIMPLE(Viewport, Tone, Tone*, p->tone)
 
 void Viewport::setOX(int value)
 {
-	
+	p->ox = value;
+	composite();
 }
 
 void Viewport::setOY(int value)
 {
-	
+	p->oy = value;
+	composite();
 }
 
 void Viewport::setRect(Rect *value)
 {
-	
+	p->rect = value;
+	composite();
 }
 
-/* Scene */
+
+
+extern pthread_mutex_t s_thread_handler_mutex;
 void Viewport::composite()
 {
-	
+
 }
 
-/* SceneElement */
+
 void Viewport::draw()
 {
-	composite();
+	
 }
 
 /* Disposable */
 void Viewport::releaseResources()
 {
 	delete p;
-}
 
+}

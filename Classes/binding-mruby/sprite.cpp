@@ -29,8 +29,6 @@ struct SpritePrivate
 
 	CCRect sceneRect;
 
-	/* Would this sprite be visible on
-	 * the screen if drawn? */
 	bool isVisible;
 
 	Color *color;
@@ -38,6 +36,13 @@ struct SpritePrivate
 
 	EtcTemps tmp;
 
+	int x;
+	int y;
+	int ox;
+	int oy;
+	int zx;
+	int zy;
+	int angle;
 
 	SpritePrivate()
 	    : bitmap(0),
@@ -51,7 +56,7 @@ struct SpritePrivate
 	      isVisible(false),
 	      color(&tmp.color),
 	      tone(&tmp.tone),
-		  viewport(0)
+		  viewport(0),x(0),y(0),ox(0),oy(0),zx(0),zy(0),angle(0)
 	{
 
 		updateSrcRectCon();
@@ -60,10 +65,7 @@ struct SpritePrivate
 
 	~SpritePrivate()
 	{
-		if (bitmap)
-		{
-			delete bitmap;
-		}
+
 	}
 
 	void recomputeBushDepth()
@@ -106,19 +108,20 @@ Sprite::~Sprite()
 #define DISP_CLASS_NAME "sprite"
 DEF_ATTR_RD_SIMPLE(Sprite, Bitmap,    Bitmap*, p->bitmap)
 DEF_ATTR_RD_SIMPLE(Sprite, SrcRect,   Rect*,   p->srcRect)
-DEF_ATTR_RD_SIMPLE(Sprite, X,         int,     p->bitmap->getEmuBitmap()->getPositionX())
-DEF_ATTR_RD_SIMPLE(Sprite, Y,         int,     p->bitmap->getEmuBitmap()->getPositionY())
-DEF_ATTR_RD_SIMPLE(Sprite, OX,        int,     p->bitmap->getEmuBitmap()->getAnchorPoint().x)
-DEF_ATTR_RD_SIMPLE(Sprite, OY,        int,     p->bitmap->getEmuBitmap()->getAnchorPoint().y)
-DEF_ATTR_RD_SIMPLE(Sprite, ZoomX,     float,   p->bitmap->getEmuBitmap()->getScaleX())
-DEF_ATTR_RD_SIMPLE(Sprite, ZoomY,     float,   p->bitmap->getEmuBitmap()->getScaleY())
-DEF_ATTR_RD_SIMPLE(Sprite, Angle,     float,   p->bitmap->getEmuBitmap()->getRotation())
+DEF_ATTR_RD_SIMPLE(Sprite, X,         int,     p->x)
+DEF_ATTR_RD_SIMPLE(Sprite, Y,         int,     p->y)
+DEF_ATTR_RD_SIMPLE(Sprite, OX,        int,     p->ox)
+DEF_ATTR_RD_SIMPLE(Sprite, OY,        int,     p->oy)
+DEF_ATTR_RD_SIMPLE(Sprite, ZoomX,     float,   p->zx)
+DEF_ATTR_RD_SIMPLE(Sprite, ZoomY,     float,   p->zy)
+DEF_ATTR_RD_SIMPLE(Sprite, Angle,     float,   p->angle)
 DEF_ATTR_RD_SIMPLE(Sprite, Mirror,    bool,    p->mirrored)
 DEF_ATTR_RD_SIMPLE(Sprite, BushDepth, int,     p->bushDepth)
 DEF_ATTR_RD_SIMPLE(Sprite, BlendType, int,     p->blendType)
 DEF_ATTR_RD_SIMPLE(Sprite, Width,     int,     p->srcRect->width)
 DEF_ATTR_RD_SIMPLE(Sprite, Height,    int,     p->srcRect->height)
 DEF_ATTR_RD_SIMPLE(Sprite, Opacity,    int,    p->opacity)
+DEF_ATTR_RD_SIMPLE(Sprite, Visible,    bool,    p->isVisible)
 
 DEF_ATTR_SIMPLE(Sprite, Viewport,    Viewport*, p->viewport)
 DEF_ATTR_SIMPLE(Sprite, BushOpacity, int,    p->bushOpacity)
@@ -131,15 +134,44 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Bitmap* bitmap = (Bitmap*)ptr2;
 
-	if(NULL!=sprite->p->bitmap)
-	{
-		delete sprite->p->bitmap;
-	}
-
 	sprite->p->bitmap = bitmap;
 	bitmap->getEmuBitmap()->setAnchorPoint(ccp(0,1));
 	bitmap->getEmuBitmap()->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
-	SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
+
+	Viewport* viewport = sprite->p->viewport;
+	if (NULL==viewport)
+	{
+		SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
+	}
+	else
+	{
+
+		CCSprite* ccsprite = bitmap->getEmuBitmap();
+
+		Rect* rect = viewport->getRect();
+		int ox = viewport->getOX();
+		int oy = rgss_y_to_cocos_y(viewport->getOY(),ccsprite->getContentSize().height) - rect->height;
+
+		int x = rect->x - ox;
+		int y = rgss_y_to_cocos_y(rect->y,ccsprite->getContentSize().height) - oy + rect->height;
+
+		CCSprite* pSprite = CCSprite::create(bitmap->getFilename().c_str());
+		pSprite->setAnchorPoint(ccp(0,0));
+		CCClippingNode* clipper = CCClippingNode::create();
+		clipper->setPosition(ccp(x, y));
+		clipper->setContentSize(CCSizeMake(rect->width,rect->height));
+
+		CCLayerColor *stencil = CCLayerColor::create(ccc4(255,255,255,255));
+		stencil->setPosition(ox,oy);
+		stencil->setContentSize(clipper->getContentSize());
+
+		clipper->setStencil(stencil);
+		clipper->addChild(pSprite);
+		SceneMain::getMainLayer()->addChild(clipper);
+			
+		
+	}
+	
 
 	return 0;
 }
@@ -175,11 +207,16 @@ void Sprite::setSrcRect(Rect *rect)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	if (p->srcRect != &(p->tmp.rect) && p->srcRect!=NULL)
+	{
+		delete p->srcRect;
+	}
+	p->srcRect = rect;
 }
 
 struct SetPropStruct
 {
-	enum type{x=0,y,ox,oy,zx,zy,angle};
+	enum type{x=0,y,ox,oy,zx,zy,angle,visible};
 	SetPropStruct::type prop_type;
 	int value;
 };
@@ -215,6 +252,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 		case SetPropStruct::angle:
 			emubitmap->setRotation(value);
 			break;
+		case SetPropStruct::visible:
+			emubitmap->setVisible(value);
+			break;
 		}
 	}
 	delete propstruct;
@@ -231,6 +271,7 @@ void Sprite::setX(int value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->x = value;
 }
 
 void Sprite::setY(int value)
@@ -242,6 +283,7 @@ void Sprite::setY(int value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->y = value;
 }
 
 void Sprite::setOX(int value)
@@ -253,6 +295,7 @@ void Sprite::setOX(int value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->ox = value;
 }
 
 void Sprite::setOY(int value)
@@ -264,6 +307,7 @@ void Sprite::setOY(int value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->oy = value;
 }
 
 void Sprite::setZoomX(float value)
@@ -275,6 +319,7 @@ void Sprite::setZoomX(float value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->zx = value;
 }
 
 void Sprite::setZoomY(float value)
@@ -286,6 +331,7 @@ void Sprite::setZoomY(float value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->zy = value;
 }
 
 void Sprite::setAngle(float value)
@@ -297,6 +343,19 @@ void Sprite::setAngle(float value)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->angle = value;
+}
+
+void Sprite::setVisible(bool value)
+{
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::visible;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->isVisible = value;
 }
 
 

@@ -1,5 +1,4 @@
 #include "SceneMain.h"
-#include "binding-mruby/RubyEngine.h"
 #include "ThreadHandlerManager.h"
 
 #define MAIN_LAYER_TAG 1000
@@ -23,12 +22,11 @@ bool SceneMain::init()
 	
 	ThreadHandlerMananger::getInstance();
 
-	RubyEngine* engine = new RubyEngine;
-	mrb_state* mrb = engine->initAll();
+	m_engine = new RubyEngine;
+	mrb_state* mrb = m_engine->initAll();
 
-	engine->initRMXPScript("Data/Scripts.rxdata");
-	engine->runRMXPScript();
-
+	m_engine->initRMXPScript("Data/Scripts.rxdata");
+	
 	scheduleUpdate();
 
 	return true;
@@ -37,6 +35,8 @@ bool SceneMain::init()
 extern pthread_mutex_t s_thread_handler_mutex;
 void SceneMain::update( float delta )
 {
+	if (!m_engine->getRunRMXP())
+		m_engine->runRMXPScript();
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->update(delta);
 	pthread_mutex_unlock(&s_thread_handler_mutex);

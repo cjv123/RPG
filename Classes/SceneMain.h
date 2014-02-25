@@ -3,6 +3,7 @@
 
 #include <cocos2d.h>
 using namespace cocos2d;
+#include "binding-mruby/RubyEngine.h"
 
 class SceneMain : public CCLayer
 {
@@ -12,6 +13,7 @@ public:
 	static CCLayer* getMainLayer();
 	virtual bool init();
 protected:
+	RubyEngine* m_engine;
 	virtual void update(float delta);
 };
 

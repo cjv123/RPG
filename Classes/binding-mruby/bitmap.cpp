@@ -8,14 +8,14 @@ struct BitmapPrivate
 {
 	Font *font;
 
-	BitmapPrivate()
+	BitmapPrivate() : font(0)
 	{
-		font = new Font(FontPrivate::defaultName.c_str(),FontPrivate::defaultSize);
+
 	}
 
 	~BitmapPrivate()
 	{
-		delete font;
+		
 	}
 };
 
@@ -275,7 +275,13 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 {
 	Bitmap* bitmap = (Bitmap*)ptr1;
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
-	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),bitmap->p->font->getName(),bitmap->p->font->getSize());
+
+	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),FontPrivate::defaultName.c_str(),FontPrivate::defaultSize);
+	if (bitmap->p->font)
+	{
+		label->setFontName(bitmap->p->font->getName());
+		label->setFontSize(bitmap->p->font->getSize());
+	}
 	label->setDimensions(CCSizeMake(ptr2struct->rect.w,ptr2struct->rect.h));
 	label->setPosition(ccp(ptr2struct->rect.x,ptr2struct->rect.y));
 
@@ -371,7 +377,7 @@ void Bitmap::releaseResources()
 	if (NULL!=m_emuBitmap)
 	{
 		m_emuBitmap->release();
-		m_emuBitmap->removeAllChildrenWithCleanup(true);
+		m_emuBitmap->removeFromParent();
 		m_emuBitmap = NULL;
 	}
 }
@@ -379,5 +385,10 @@ void Bitmap::releaseResources()
 CCSprite* Bitmap::getEmuBitmap()
 {
 	return m_emuBitmap;
+}
+
+std::string Bitmap::getFilename()
+{
+	return m_filename;
 }
 

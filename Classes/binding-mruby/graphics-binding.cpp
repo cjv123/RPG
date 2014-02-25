@@ -8,8 +8,9 @@
 MRB_FUNCTION(graphicsUpdate)
 {
 	MRB_FUN_UNUSED_PARAM;
-
-	Sleep(1/60);
+#ifdef WIN32
+	Sleep(1000/60);
+#endif 
 	return mrb_nil_value();
 }
 

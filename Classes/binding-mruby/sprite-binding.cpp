@@ -8,7 +8,7 @@ DEF_TYPE(Sprite);
 
 MRB_METHOD(spriteInitialize)
 {
-	Sprite *s = new Sprite;
+	Sprite *s = viewportElementInitialize<Sprite>(mrb, self);
 
 	setPrivateData(mrb, self, s, SpriteType);
 
@@ -69,6 +69,7 @@ DEF_PROP_F(Sprite, ZoomY)
 DEF_PROP_F(Sprite, Angle)
 
 DEF_PROP_B(Sprite, Mirror)
+DEF_PROP_B(Sprite,Visible)
 
 void spriteBindingInit(mrb_state *mrb)
 {
@@ -94,6 +95,7 @@ void spriteBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Sprite, Color,     "color"      );
 	INIT_PROP_BIND( Sprite, Tone,      "tone"       );
 	INIT_PROP_BIND(Sprite,Viewport,"viewport");
+	INIT_PROP_BIND(Sprite,Visible,"visible");
 	
 	mrb_define_method(mrb, klass, "flash", flashableFlash, MRB_ARGS_REQ(2));
 	mrb_define_method(mrb, klass, "update", flashableUpdate, MRB_ARGS_NONE());

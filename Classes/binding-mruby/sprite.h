@@ -5,6 +5,8 @@
 #include "util.h"
 #include "viewport.h"
 
+#define VIEWPORT_SP_TAG 2001
+
 class Bitmap;
 struct Color;
 struct Tone;
@@ -42,11 +44,13 @@ public:
 
 	void flash(Color* color,int duration);
 	void update();
+	
 private:
 	static int handler_method_set_mirror(int ptr1,void* ptr2);
 	static int handler_method_set_opacity(int ptr1,void* ptr2);
 	static int handler_method_set_srcrect(int prt1,void* ptr2);
 	static int handler_method_set_prop(int ptr1,void* ptr2);
+	static int handler_method_flash(int ptr1,void* ptr2);
 
 	SpritePrivate *p;
 
@@ -55,6 +59,9 @@ private:
 	void releaseResources();
 
 	static int handler_method_set_bitmap(int ptr1,void* prt2);
+
+	Color* m_flashColor;
+	int m_flashDuration;
 };
 
 #endif // SPRITE_H

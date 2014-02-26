@@ -57,8 +57,8 @@
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v7.1A\lib;E:\workspace\zlib-1.2.8;E:\workspace\mruby\build\host\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>E:\workspace\zlib-1.2.8;E:\workspace\mruby\include;E:\workspace\boost_1_53_0;$(IncludePath)</IncludePath>
+    <LibraryPath>$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v7.1A\lib;..\zlib-1.2.8;..\mruby\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\zlib-1.2.8;..\mruby\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v7.1A\lib;$(LibraryPath)</LibraryPath>
@@ -154,7 +154,6 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClInclude Include="..\Classes\binding-mruby\binding-types.h" />
     <ClInclude Include="..\Classes\binding-mruby\binding-util.h" />
     <ClInclude Include="..\Classes\binding-mruby\bitmap.h" />
-    <ClInclude Include="..\Classes\binding-mruby\boost-hash.h" />
     <ClInclude Include="..\Classes\binding-mruby\disposable-binding.h" />
     <ClInclude Include="..\Classes\binding-mruby\disposable.h" />
     <ClInclude Include="..\Classes\binding-mruby\etc.h" />

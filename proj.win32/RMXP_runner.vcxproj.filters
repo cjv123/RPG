@@ -92,9 +92,6 @@
     <ClInclude Include="..\Classes\binding-mruby\binding-util.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\binding-mruby\boost-hash.h">
-      <Filter>Classes\Binding-mruby</Filter>
-    </ClInclude>
     <ClInclude Include="..\Classes\ThreadHandlerManager.h">
       <Filter>Classes</Filter>
     </ClInclude>

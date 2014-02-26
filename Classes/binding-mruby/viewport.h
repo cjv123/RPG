@@ -23,6 +23,7 @@ public:
 	DECL_ATTR( Color, Color* )
 	DECL_ATTR( Tone,  Tone*  )
 
+	CCClippingNode* getClippingNode();
 private:
 	void initViewport(int x, int y, int width, int height);
 	void geometryChanged();
@@ -36,6 +37,7 @@ private:
 	static int handler_method_composite(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
+	CCClippingNode* m_clippingNode;
 	friend struct ViewportPrivate;
 
 };

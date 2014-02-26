@@ -1,7 +1,6 @@
 #include "font.h"
 
 #include "exception.h"
-#include "boost-hash.h"
 #include "util.h"
 
 #include <string>

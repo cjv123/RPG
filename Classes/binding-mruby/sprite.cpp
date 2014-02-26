@@ -139,40 +139,18 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	bitmap->getEmuBitmap()->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
 
 	Viewport* viewport = sprite->p->viewport;
-	if (NULL==viewport)
+	if (NULL!=viewport)
 	{
-		SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
+		CCSprite* pSprite = bitmap->getEmuBitmap();
+		pSprite->setPosition(ccp(viewport->getRect()->x,rgss_y_to_cocos_y(viewport->getRect()->y,SceneMain::getMainLayer()->getContentSize().height)));
+
+		Rect rect(viewport->getOX(),viewport->getOY(),viewport->getRect()->width,viewport->getRect()->height);
+
+		Rect* prect= &rect;
+		handler_method_set_srcrect((int)sprite,(void*)(prect));
 	}
-	else
-	{
 
-		CCSprite* ccsprite = bitmap->getEmuBitmap();
-
-		Rect* rect = viewport->getRect();
-		int ox = viewport->getOX();
-		int oy = rgss_y_to_cocos_y(viewport->getOY(),ccsprite->getContentSize().height) - rect->height;
-
-		int x = rect->x - ox;
-		int y = rgss_y_to_cocos_y(rect->y,ccsprite->getContentSize().height) - oy + rect->height;
-
-		CCSprite* pSprite = CCSprite::create(bitmap->getFilename().c_str());
-		pSprite->setAnchorPoint(ccp(0,0));
-		CCClippingNode* clipper = CCClippingNode::create();
-		clipper->setPosition(ccp(x, y));
-		clipper->setContentSize(CCSizeMake(rect->width,rect->height));
-
-		CCLayerColor *stencil = CCLayerColor::create(ccc4(255,255,255,255));
-		stencil->setPosition(ox,oy);
-		stencil->setContentSize(clipper->getContentSize());
-
-		clipper->setStencil(stencil);
-		clipper->addChild(pSprite);
-		SceneMain::getMainLayer()->addChild(clipper);
-			
-		
-	}
-	
-
+	SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
 	return 0;
 }
 
@@ -189,12 +167,14 @@ void Sprite::setBitmap(Bitmap *bitmap)
 int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	if (NULL != sprite->p->bitmap->getEmuBitmap())
+	CCSprite* emuBitmap = sprite->p->bitmap->getEmuBitmap();
+	if (NULL != emuBitmap)
 	{
 		Rect* rect = (Rect*)ptr2;
-		CCRect texturerect = CCRectMake(rect->getX(),rect->getY(),
+		CCRect texturerect = CCRectMake(rect->getX(),
+			rect->getY(),
 			rect->getWidth(),rect->getHeight());
-		sprite->getBitmap()->getEmuBitmap()->setTextureRect(texturerect);
+		emuBitmap->setTextureRect(texturerect);
 	}
 	return 0;
 }
@@ -207,10 +187,6 @@ void Sprite::setSrcRect(Rect *rect)
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
-	if (p->srcRect != &(p->tmp.rect) && p->srcRect!=NULL)
-	{
-		delete p->srcRect;
-	}
 	p->srcRect = rect;
 }
 
@@ -362,41 +338,42 @@ void Sprite::setVisible(bool value)
 int Sprite::handler_method_set_mirror( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	sprite->getBitmap()->getEmuBitmap()->setFlipX((bool)ptr2);
+	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+	if (NULL != emubitmap)
+	{
+		emubitmap->setFlipX((bool)ptr2);
+	}
 	return 0;
 }
 
 void Sprite::setMirror(bool mirrored)
 {
+	ThreadHandler hander={handler_method_set_mirror,(int)this,(void*)mirrored};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->mirrored = mirrored;
-	CCSprite* emubitmap = p->bitmap->getEmuBitmap();
-	if (NULL != emubitmap)
-	{
-		ThreadHandler hander={handler_method_set_mirror,(int)this,(void*)mirrored};
-		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
-		pthread_mutex_unlock(&s_thread_handler_mutex);
-	}
 }
 
 int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	sprite->getBitmap()->getEmuBitmap()->setOpacity((int)ptr2);
+	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+	if (NULL != emubitmap)
+	{
+		emubitmap->setOpacity((int)ptr2);
+	}
 	return 0;
 }
 
 
 void Sprite::setOpacity(int value)
 {
-	CCSprite* emubitmap = p->bitmap->getEmuBitmap();
-	if (NULL != emubitmap)
-	{
-		ThreadHandler hander={handler_method_set_opacity,(int)this,(void*)value};
-		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
-		pthread_mutex_unlock(&s_thread_handler_mutex);
-	}
+	ThreadHandler hander={handler_method_set_opacity,(int)this,(void*)value};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->opacity = value;
 }
 
 
@@ -423,14 +400,74 @@ void Sprite::draw()
 	
 }
 
+struct Flash_ptr_struct 
+{
+	Color* color;
+	int duration;
+};
+
+int Sprite::handler_method_flash( int ptr1,void* ptr2 )
+{
+	Sprite* sprite = (Sprite*)ptr1;
+	Flash_ptr_struct* flash_ptr = (Flash_ptr_struct*)ptr2;
+	Color* color = flash_ptr->color;
+	float duration = flash_ptr->duration*1.0f/60.0f;
+	if (sprite->p->bitmap)
+	{
+		CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+		CCSprite* pSprite = CCSprite::createWithTexture(emubitmap->getTexture(),emubitmap->getTextureRect());
+		pSprite->setAnchorPoint(ccp(0,0));
+
+		CCLayerColor* blendlayer = CCLayerColor::create(ccc4(color->getRed(),color->getGreen(),color->getBlue(),color->getAlpha()));
+		blendlayer->setContentSize(pSprite->getContentSize());
+		ccBlendFunc blendFunc1 = { GL_DST_ALPHA, GL_ZERO};
+		blendlayer->setBlendFunc(blendFunc1);
+
+		CCRenderTexture* rt = CCRenderTexture::create(pSprite->getContentSize().width,pSprite->getContentSize().height);
+		rt->begin();
+		pSprite->visit();
+		blendlayer->visit();
+		rt->end();
+
+		CCImage* image = rt->newCCImage();
+		CCTexture2D* texture = new CCTexture2D;
+		texture->initWithImage(image);
+		CCSprite* masksp = CCSprite::createWithTexture(texture,CCRectMake(0,0,texture->getContentSize().width,texture->getContentSize().height));
+		masksp->setAnchorPoint(ccp(0,0));
+		
+		emubitmap->addChild(masksp);
+
+		CCFadeOut* fadeout = CCFadeOut::create(duration);
+		masksp->runAction(fadeout);
+
+		
+	}
+
+	delete flash_ptr;
+	return 0;
+}
+
 void Sprite::flash( Color* color,int duration )
 {
-
+	m_flashColor = color;
+	m_flashDuration = duration;
 }
 
 void Sprite::update()
 {
-
+	if (m_flashDuration!=0)
+	{
+		Flash_ptr_struct* ptr2 = new Flash_ptr_struct;
+		ptr2->color = m_flashColor;
+		ptr2->duration = m_flashDuration;
+		ThreadHandler hander={handler_method_flash,(int)this,(void*)ptr2};
+		pthread_mutex_lock(&s_thread_handler_mutex);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		pthread_mutex_unlock(&s_thread_handler_mutex);
+		m_flashDuration = 0;
+	}
 }
+
+
 
 

@@ -10,6 +10,12 @@ using namespace cocos2d;
 
 struct ViewportPrivate;
 
+class ViewPortDelegate
+{
+public:
+	virtual void composite() = 0;
+};
+
 class Viewport : public Disposable
 {
 public:
@@ -23,7 +29,7 @@ public:
 	DECL_ATTR( Color, Color* )
 	DECL_ATTR( Tone,  Tone*  )
 
-	CCClippingNode* getClippingNode();
+	void setDelegate(ViewPortDelegate* delegate);
 private:
 	void initViewport(int x, int y, int width, int height);
 	void geometryChanged();
@@ -37,9 +43,8 @@ private:
 	static int handler_method_composite(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
-	CCClippingNode* m_clippingNode;
 	friend struct ViewportPrivate;
-
+	ViewPortDelegate* m_viewPortDelegate;
 };
 
 #endif // VIEWPORT_H

@@ -64,13 +64,13 @@ struct ViewportPrivate
 	}
 };
 
-Viewport::Viewport(int x, int y, int width, int height) : m_clippingNode(NULL)
+Viewport::Viewport(int x, int y, int width, int height) : m_viewPortDelegate(0)
 {
 	initViewport(x,y,width,height);
 	
 }
 
-Viewport::Viewport(Rect *rect) : m_clippingNode(NULL)
+Viewport::Viewport(Rect *rect) :m_viewPortDelegate(0)
 {
 	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
@@ -117,34 +117,7 @@ void Viewport::setRect(Rect *value)
 int Viewport::handler_method_composite( int ptr1,void* ptr2 )
 {
 	Viewport* viewport = (Viewport*)ptr1;
-	CCClippingNode* clipper = viewport->m_clippingNode;
-	if (clipper==NULL)
-	{
-		clipper = CCClippingNode::create();
-		clipper->retain();
-		viewport->m_clippingNode = clipper;
-	}
 	
-
-	CCSprite* ccsprite = dynamic_cast<CCSprite*>(clipper->getChildByTag(VIEWPORT_SP_TAG));
-	if (ccsprite!=NULL)
-	{
-		Rect* rect = viewport->getRect();
-		int ox = viewport->getOX();
-		int oy = rgss_y_to_cocos_y(viewport->getOY(),ccsprite->getContentSize().height) - rect->height;
-
-		int x = rect->x - ox;
-		int y = rgss_y_to_cocos_y(rect->y,ccsprite->getContentSize().height) - oy + rect->height;
-
-		clipper->setPosition(ccp(x, y));
-		clipper->setContentSize(CCSizeMake(rect->width,rect->height));
-
-		CCLayerColor *stencil = CCLayerColor::create(ccc4(255,255,255,255));
-		stencil->setPosition(ox,oy);
-		stencil->setContentSize(clipper->getContentSize());
-		clipper->setStencil(stencil);
-	}
-		
 	
 
 	return 0;
@@ -154,10 +127,14 @@ int Viewport::handler_method_composite( int ptr1,void* ptr2 )
 extern pthread_mutex_t s_thread_handler_mutex;
 void Viewport::composite()
 {
-	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
-	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
+// 	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
+// 	pthread_mutex_lock(&s_thread_handler_mutex);
+// 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+// 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	if (m_viewPortDelegate)
+	{
+		m_viewPortDelegate->composite();
+	}
 }
 
 
@@ -170,14 +147,12 @@ void Viewport::draw()
 void Viewport::releaseResources()
 {
 	delete p;
-	if (m_clippingNode)
-	{
-		m_clippingNode->release();
-		m_clippingNode->removeFromParent();
-	}
+	
 }
 
-CCClippingNode* Viewport::getClippingNode()
+
+
+void Viewport::setDelegate( ViewPortDelegate* delegate )
 {
-	return m_clippingNode;
+	m_viewPortDelegate = delegate;
 }

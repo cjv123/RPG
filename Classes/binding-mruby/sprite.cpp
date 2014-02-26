@@ -141,13 +141,7 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
 	{
-		CCSprite* pSprite = bitmap->getEmuBitmap();
-		pSprite->setPosition(ccp(viewport->getRect()->x,rgss_y_to_cocos_y(viewport->getRect()->y,SceneMain::getMainLayer()->getContentSize().height)));
-
-		Rect rect(viewport->getOX(),viewport->getOY(),viewport->getRect()->width,viewport->getRect()->height);
-
-		Rect* prect= &rect;
-		handler_method_set_srcrect((int)sprite,(void*)(prect));
+		handler_method_composite((int)sprite,(void*)NULL);
 	}
 
 	SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
@@ -466,6 +460,35 @@ void Sprite::update()
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 		m_flashDuration = 0;
 	}
+}
+
+
+int Sprite::handler_method_composite( int ptr1,void* ptr2 )
+{
+	Sprite* sprite = (Sprite*)ptr1;
+	Viewport* viewport = sprite->p->viewport;
+
+	if (viewport)
+	{
+		CCSprite* pSprite = sprite->p->bitmap->getEmuBitmap();
+		pSprite->setPosition(ccp(viewport->getRect()->x,rgss_y_to_cocos_y(viewport->getRect()->y,SceneMain::getMainLayer()->getContentSize().height)));
+
+		Rect rect(viewport->getOX(),viewport->getOY(),viewport->getRect()->width,viewport->getRect()->height);
+
+		Rect* prect= &rect;
+		handler_method_set_srcrect((int)sprite,(void*)(prect));
+	}
+
+	return 0;
+}
+
+
+void Sprite::composite()
+{
+	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 

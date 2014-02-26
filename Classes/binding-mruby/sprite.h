@@ -14,7 +14,7 @@ struct Rect;
 
 struct SpritePrivate;
 
-class Sprite : public Disposable
+class Sprite : public Disposable,public ViewPortDelegate
 {
 public:
 	Sprite(Viewport *viewport = 0);
@@ -51,6 +51,7 @@ private:
 	static int handler_method_set_srcrect(int prt1,void* ptr2);
 	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_flash(int ptr1,void* ptr2);
+	static int handler_method_composite(int ptr1,void* ptr2);
 
 	SpritePrivate *p;
 
@@ -59,6 +60,8 @@ private:
 	void releaseResources();
 
 	static int handler_method_set_bitmap(int ptr1,void* prt2);
+
+	virtual void composite();
 
 	Color* m_flashColor;
 	int m_flashDuration;

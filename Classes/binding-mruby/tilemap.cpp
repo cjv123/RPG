@@ -303,6 +303,7 @@ void Tilemap::setViewport(Viewport *value)
 void Tilemap::setTileset(Bitmap *value)
 {
 	p->tileset = value;
+	drawMap();
 }
 
 void Tilemap::setMapData(Table *value)
@@ -310,6 +311,7 @@ void Tilemap::setMapData(Table *value)
 	p->mapData = value;
 	p->mapWidth = p->mapData->xSize();
 	p->mapHeight = p->mapData->ySize();
+	drawMap();
 }
 
 void Tilemap::setFlashData(Table *value)
@@ -357,7 +359,7 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	int mapDepth = mapData->zSize();
 	CCLayer** mapLayer = tilemap->m_mapLayer;
 
-	for (int i;i<3;i++)
+	for (int i=0;i<3;i++)
 	{
 		mapLayer[i] = CCLayer::create();
 		mapLayer[i]->setContentSize(CCSizeMake(mapWidth,mapHeight));

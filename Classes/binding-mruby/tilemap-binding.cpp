@@ -118,16 +118,15 @@ DEF_PROP_B(Tilemap, Visible)
 DEF_PROP_I(Tilemap, OX)
 DEF_PROP_I(Tilemap, OY)
 
-void
-tilemapBindingInit(mrb_state *mrb)
+void tilemapBindingInit(mrb_state *mrb)
 {
-	RClass *klass = mrb_define_class(mrb, "TilemapAutotiles", 0);
+	RClass *klass = mrb_define_class(mrb, "TilemapAutotiles", mrb_class_get(mrb,"Object"));
 
 	mrb_define_method(mrb, klass, "[]=", tilemapAutotilesSet, MRB_ARGS_REQ(2));
 	mrb_define_method(mrb, klass, "[]", tilemapAutotilesGet, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, klass, "inspect", inspectObject, MRB_ARGS_NONE());
 
-	klass = mrb_define_class(mrb, "Tilemap", 0);
+	klass = mrb_define_class(mrb, "Tilemap", mrb_class_get(mrb,"Object"));
 
 	disposableBindingInit<Tilemap>(mrb, klass);
 

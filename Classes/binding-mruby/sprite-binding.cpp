@@ -58,6 +58,7 @@ DEF_PROP_OBJ(Sprite,Viewport,Viewport,CSviewport)
 
 DEF_PROP_I(Sprite, X)
 DEF_PROP_I(Sprite, Y)
+DEF_PROP_I(Sprite, Z)
 DEF_PROP_I(Sprite, OX)
 DEF_PROP_I(Sprite, OY)
 DEF_PROP_I(Sprite, BushDepth)
@@ -83,6 +84,7 @@ void spriteBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Sprite, SrcRect,   "src_rect"   );
 	INIT_PROP_BIND( Sprite, X,         "x"          );
 	INIT_PROP_BIND( Sprite, Y,         "y"          );
+	INIT_PROP_BIND( Sprite, Z,         "z"          );
 	INIT_PROP_BIND( Sprite, OX,        "ox"         );
 	INIT_PROP_BIND( Sprite, OY,        "oy"         );
 	INIT_PROP_BIND( Sprite, ZoomX,     "zoom_x"     );

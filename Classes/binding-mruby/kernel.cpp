@@ -146,7 +146,7 @@ MRB_FUNCTION(kernelLoadData)
 	mrb_get_args(mrb, "z", &filename);
 
 	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
-	string filepath = writepath + filename;
+	string filepath = filename;
 
 	unsigned long size;
 	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(),"rb",&size);

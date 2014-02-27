@@ -38,6 +38,7 @@ struct SpritePrivate
 
 	int x;
 	int y;
+	int z;
 	int ox;
 	int oy;
 	int zx;
@@ -56,7 +57,7 @@ struct SpritePrivate
 	      isVisible(false),
 	      color(&tmp.color),
 	      tone(&tmp.tone),
-		  viewport(0),x(0),y(0),ox(0),oy(0),zx(0),zy(0),angle(0)
+		  viewport(0),x(0),y(0),z(0),ox(0),oy(0),zx(0),zy(0),angle(0)
 	{
 
 		updateSrcRectCon();
@@ -110,6 +111,7 @@ DEF_ATTR_RD_SIMPLE(Sprite, Bitmap,    Bitmap*, p->bitmap)
 DEF_ATTR_RD_SIMPLE(Sprite, SrcRect,   Rect*,   p->srcRect)
 DEF_ATTR_RD_SIMPLE(Sprite, X,         int,     p->x)
 DEF_ATTR_RD_SIMPLE(Sprite, Y,         int,     p->y)
+DEF_ATTR_RD_SIMPLE(Sprite, Z,         int,     p->z)
 DEF_ATTR_RD_SIMPLE(Sprite, OX,        int,     p->ox)
 DEF_ATTR_RD_SIMPLE(Sprite, OY,        int,     p->oy)
 DEF_ATTR_RD_SIMPLE(Sprite, ZoomX,     float,   p->zx)
@@ -122,8 +124,8 @@ DEF_ATTR_RD_SIMPLE(Sprite, Width,     int,     p->srcRect->width)
 DEF_ATTR_RD_SIMPLE(Sprite, Height,    int,     p->srcRect->height)
 DEF_ATTR_RD_SIMPLE(Sprite, Opacity,    int,    p->opacity)
 DEF_ATTR_RD_SIMPLE(Sprite, Visible,    bool,    p->isVisible)
+DEF_ATTR_RD_SIMPLE(Sprite, Viewport,    Viewport*, p->viewport)
 
-DEF_ATTR_SIMPLE(Sprite, Viewport,    Viewport*, p->viewport)
 DEF_ATTR_SIMPLE(Sprite, BushOpacity, int,    p->bushOpacity)
 DEF_ATTR_SIMPLE(Sprite, Color,       Color*, p->color)
 DEF_ATTR_SIMPLE(Sprite, Tone,        Tone*,  p->tone)
@@ -186,7 +188,7 @@ void Sprite::setSrcRect(Rect *rect)
 
 struct SetPropStruct
 {
-	enum type{x=0,y,ox,oy,zx,zy,angle,visible};
+	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible};
 	SetPropStruct::type prop_type;
 	int value;
 };
@@ -206,6 +208,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 			break;
 		case SetPropStruct::y:
 			emubitmap->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
+			break;
+		case SetPropStruct::z:
+			emubitmap->setZOrder(value);
 			break;
 		case SetPropStruct::ox:
 			emubitmap->setAnchorPoint(ccp(value/emubitmap->getContentSize().width,emubitmap->getAnchorPoint().y));
@@ -254,6 +259,18 @@ void Sprite::setY(int value)
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->y = value;
+}
+
+void Sprite::setZ(int value)
+{
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::z;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->z = value;
 }
 
 void Sprite::setOX(int value)
@@ -368,6 +385,12 @@ void Sprite::setOpacity(int value)
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->opacity = value;
+}
+
+void Sprite::setViewport(Viewport* value)
+{
+	value->addDelegate(this);
+	p->viewport = value;
 }
 
 

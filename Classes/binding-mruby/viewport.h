@@ -7,6 +7,7 @@
 
 #include <cocos2d.h>
 using namespace cocos2d;
+#include <vector>
 
 struct ViewportPrivate;
 
@@ -29,7 +30,7 @@ public:
 	DECL_ATTR( Color, Color* )
 	DECL_ATTR( Tone,  Tone*  )
 
-	void setDelegate(ViewPortDelegate* delegate);
+	void addDelegate(ViewPortDelegate* delegate);
 private:
 	void initViewport(int x, int y, int width, int height);
 	void geometryChanged();
@@ -44,7 +45,7 @@ private:
 
 	ViewportPrivate *p;
 	friend struct ViewportPrivate;
-	ViewPortDelegate* m_viewPortDelegate;
+	std::vector<ViewPortDelegate*> m_viewPortDelegates;
 };
 
 #endif // VIEWPORT_H

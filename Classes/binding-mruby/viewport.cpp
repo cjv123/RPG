@@ -64,13 +64,13 @@ struct ViewportPrivate
 	}
 };
 
-Viewport::Viewport(int x, int y, int width, int height) : m_viewPortDelegate(0)
+Viewport::Viewport(int x, int y, int width, int height) 
 {
 	initViewport(x,y,width,height);
 	
 }
 
-Viewport::Viewport(Rect *rect) :m_viewPortDelegate(0)
+Viewport::Viewport(Rect *rect)
 {
 	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
@@ -131,9 +131,12 @@ void Viewport::composite()
 // 	pthread_mutex_lock(&s_thread_handler_mutex);
 // 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 // 	pthread_mutex_unlock(&s_thread_handler_mutex);
-	if (m_viewPortDelegate)
+	if (m_viewPortDelegates.size()>0)
 	{
-		m_viewPortDelegate->composite();
+		for (int i=0;i<m_viewPortDelegates.size();i++)
+		{
+			m_viewPortDelegates[i]->composite();
+		}
 	}
 }
 
@@ -152,7 +155,7 @@ void Viewport::releaseResources()
 
 
 
-void Viewport::setDelegate( ViewPortDelegate* delegate )
+void Viewport::addDelegate( ViewPortDelegate* delegate )
 {
-	m_viewPortDelegate = delegate;
+	m_viewPortDelegates.push_back(delegate);
 }

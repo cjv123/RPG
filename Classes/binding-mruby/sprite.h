@@ -27,6 +27,7 @@ public:
 	DECL_ATTR( SrcRect,     Rect*   )
 	DECL_ATTR( X,           int     )
 	DECL_ATTR( Y,           int     )
+	DECL_ATTR( Z,           int     )
 	DECL_ATTR( OX,          int     )
 	DECL_ATTR( OY,          int     )
 	DECL_ATTR( ZoomX,       float   )

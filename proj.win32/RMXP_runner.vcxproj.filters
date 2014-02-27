@@ -72,6 +72,18 @@
     <ClCompile Include="..\Classes\binding-mruby\graphics-binding.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\table.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\table-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\tilemap.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\tilemap-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -123,6 +135,12 @@
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\binding-mruby\flashable-binding.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\table.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\tilemap.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>

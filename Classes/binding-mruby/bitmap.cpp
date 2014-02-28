@@ -22,17 +22,21 @@ struct BitmapPrivate
 int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 {
 	Bitmap* bitmap = (Bitmap*)bitmap_instance;
-	char* filename_c = (char*)filename;
-	CCSprite* sp = CCSprite::create(filename_c);
+	string* filename_c = (string*)filename;
+	CCSprite* sp = CCSprite::create(filename_c->c_str());
 	bitmap->m_emuBitmap = sp;
 	sp->retain();
+	delete filename;
 	return 0;
 }
 
 extern pthread_mutex_t s_thread_handler_mutex;
 Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL)
 {
-	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)filename};
+	string* path = new string(filename);
+	if (path->find(".png") == string::npos)
+		*path+=".png";
+	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)path};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);

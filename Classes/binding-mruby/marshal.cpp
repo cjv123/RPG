@@ -29,16 +29,21 @@ struct utility {
   utility(mrb_state* M) : M(M) {}
   mrb_state* M;
 
-  RClass* path2class(char const* const path) {
-    char const* begin = path;
-    char const* p = begin;
+  RClass* path2class(const char* path) {
+    char* begin = (char*)path;
+	if (*begin == '\"')
+		begin+=1;
+	int size = strlen(begin);
+	if (begin[size-1]=='\"')
+		begin[size-1]='\0';
+    char* p = begin;
     RClass* ret = M->object_class;
 
     while(true) {
       while(*p and *p != ':') ++p;
       ret = mrb_class_ptr(mrb_mod_cv_get(M, ret, mrb_intern(M, begin, p - begin)));
 
-      if(!(*p)) { break; }
+      if(!(*p) || *p=='\"') { break; }
 
       assert(p[0] == ':' and p[1] == ':');
       p += 2;
@@ -423,8 +428,10 @@ mrb_value read_context::marshal() {
     }
 
     case 'o': { // object
-      ret = mrb_obj_value(mrb_obj_alloc(
-          M, MRB_TT_OBJECT, mrb_class_get(M, mrb_sym2name(M, symbol()))));
+	  const char* classname = mrb_sym2name(M, symbol());
+	  //printf("class name:%s\n",classname);
+	  RClass* klass =  path2class(classname);
+      ret = mrb_obj_value(mrb_obj_alloc(M, MRB_TT_OBJECT, klass));
       size_t const len = fixnum();
       for(size_t i = 0; i < len; ++i) {
         mrb_sym const key = symbol();

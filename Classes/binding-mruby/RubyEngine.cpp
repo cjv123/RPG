@@ -24,6 +24,7 @@ extern void bitmapBindingInit(mrb_state *mrb);
 extern void spriteBindingInit(mrb_state *mrb);
 extern void graphicsBindingInit(mrb_state *mrb);
 extern void viewportBindingInit(mrb_state *mrb);
+extern void tilemapBindingInit(mrb_state *mrb);
 
 
 static const char * mrbValueString(mrb_value value)
@@ -39,8 +40,7 @@ mrb_state* RubyEngine::initAll()
 	return mrb; 
 }
 
-extern char module_rpg[];
-extern unsigned int module_rpg_len;
+extern uint8_t mrbModuleRPG[];
 
 mrb_state* RubyEngine::initRubyEngine()
 {
@@ -54,6 +54,8 @@ mrb_state* RubyEngine::initRubyEngine()
 
 void RubyEngine::initBindingMethod()
 {
+	int arena = mrb_gc_arena_save(m_mrb);
+
 	mrb_mruby_marshal_gem_init(m_mrb);
 	kernelBindingInit(m_mrb);
 	etcBindingInit(m_mrb);
@@ -63,9 +65,11 @@ void RubyEngine::initBindingMethod()
 	bitmapBindingInit(m_mrb);
 	spriteBindingInit(m_mrb);
 	viewportBindingInit(m_mrb);
+	tilemapBindingInit(m_mrb);
 
-	runScript(module_rpg);
-	checkException();
+	mrb_load_irep(m_mrb, mrbModuleRPG);
+	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());
+	mrb_gc_arena_restore(m_mrb, arena);
 }
 
 mrb_state* RubyEngine::getMrbState()
@@ -94,19 +98,21 @@ void RubyEngine::showExcMessageBox(mrb_value exc)
 	const char *excClass = mrb_class_name(m_mrb, mrb_class(m_mrb, exc));
 
 	char msgBoxText[512];
-	snprintf(msgBoxText, 512, "Script '%s' line %d: %s occured.\n\n%s",
+	snprintf(msgBoxText, 512, "Script '%s' line %d: %s occured.\n%s\n",
 		mrbValueString(file), mrb_fixnum(line), excClass, mrbValueString(mesg));
 
 	printf(msgBoxText);
 }
 
-void RubyEngine::runScript(const char* script )
+void RubyEngine::runScript(const char* script,int len/*=0*/ )
 {
-	int len = strlen(script);
+	int s = len;
+	if(s==0)
+		s = strlen(script);
 
 	mrbc_context *ctx = mrbc_context_new(m_mrb);
 	ctx->capture_errors = 1;
-	mrb_load_nstring_cxt(m_mrb, script, len, ctx);
+	mrb_load_nstring_cxt(m_mrb, script, s, ctx);
 	//checkException();
 }
 
@@ -178,12 +184,16 @@ void RubyEngine::runRMXPScript()
 void* RubyEngine::networkThread( void* data )
 {
 	RubyEngine* engine = (RubyEngine*)data;
+
 	int script_cout = engine->m_RMXPScripts.size();
 	for (int i=0;i<script_cout;i++)
 	{
+		printf("run script name:%s\n",engine->m_RMXPScripts[i].name.c_str());
+		int ai = mrb_gc_arena_save(engine->m_mrb);
 		engine->runScript(engine->m_RMXPScripts[i].script.c_str());
+		mrb_gc_arena_restore(engine->m_mrb, ai);
+		engine->checkException();
 	}
-	engine->checkException();
 
 	mrb_close(engine->m_mrb);
 	pthread_exit(0);

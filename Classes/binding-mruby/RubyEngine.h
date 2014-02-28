@@ -22,7 +22,7 @@ public:
 	mrb_state* getMrbState();
 	void checkException();
 	void showExcMessageBox(mrb_value exc);
-	void runScript(const char* script);
+	void runScript(const char* script,int len = 0);
 
 	struct RMXPScript
 	{

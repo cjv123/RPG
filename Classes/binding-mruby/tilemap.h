@@ -13,7 +13,7 @@ class Table;
 
 struct TilemapPrivate;
 
-class Tilemap : public Disposable
+class Tilemap : public Disposable,public ViewPortDelegate
 {
 public:
 	class Autotiles
@@ -52,10 +52,13 @@ private:
 	CCLayer* m_mapLayer[3];
 
 	static int handler_method_drawMap(int prt1,void* ptr2);
-
+	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd);
 	void drawMap();
 
 	void releaseResources();
+
+	virtual void composite();
+
 };
 
 #endif // TILEMAP_H

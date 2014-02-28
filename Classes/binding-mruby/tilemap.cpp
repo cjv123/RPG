@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <vector>
 #include "../ThreadHandlerManager.h"
+#include "../SceneMain.h"
 
 extern pthread_mutex_t s_thread_handler_mutex;
 
@@ -23,9 +24,10 @@ inline bool contains(const C &c, const V &v)
 	return std::find(c.begin(), c.end(), v) != c.end();
 }
 
-static const int tilesetW  = 8 * 32;
-static const int autotileW = 3 * 32;
-static const int autotileH = 4 * 32;
+static const int tileW = 32;
+static const int tilesetW  = 8 * tileW;
+static const int autotileW = 3 * tileW;
+static const int autotileH = 4 * tileW;
 
 static const int autotileCount = 7;
 
@@ -97,6 +99,8 @@ struct TilemapPrivate
 	Vec2i offset;
 
 	Vec2i dispPos;
+
+	Tilemap* tilemap;
 
 	/* Tile atlas */
 	struct {
@@ -233,7 +237,12 @@ struct TilemapPrivate
 
 void Tilemap::Autotiles::set(int i, Bitmap *bitmap)
 {
+	if (p->autotiles[i] == bitmap)
+		return;
 
+	p->autotiles[i] = bitmap;
+	
+	p->tilemap->drawMap();
 }
 
 Bitmap *Tilemap::Autotiles::get(int i) const
@@ -248,6 +257,7 @@ Tilemap::Tilemap(Viewport *viewport)
 {
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
+	p->tilemap = this;
 	for (int i=0;i<3;i++)
 		m_mapLayer[i] = NULL;
 }
@@ -262,7 +272,7 @@ void Tilemap::update()
 	
 }
 
-Tilemap::Autotiles &Tilemap::getAutotiles() const
+Tilemap::Autotiles &Tilemap::getAutotiles() const 
 {
 	return p->autotilesProxy;
 }
@@ -303,6 +313,7 @@ void Tilemap::setViewport(Viewport *value)
 void Tilemap::setTileset(Bitmap *value)
 {
 	p->tileset = value;
+	drawMap();
 }
 
 void Tilemap::setMapData(Table *value)
@@ -310,6 +321,7 @@ void Tilemap::setMapData(Table *value)
 	p->mapData = value;
 	p->mapWidth = p->mapData->xSize();
 	p->mapHeight = p->mapData->ySize();
+	drawMap();
 }
 
 void Tilemap::setFlashData(Table *value)
@@ -346,6 +358,63 @@ void Tilemap::releaseResources()
 }
 
 
+static FloatRect getAutotilePieceRect(int x, int y, /* in pixel coords */
+	int corner)
+{
+	switch (corner)
+	{
+	case 0 : break;
+	case 1 : x += 16; break;
+	case 2 : x += 16; y += 16; break;
+	case 3 : y += 16; break;
+	default: abort();
+	}
+
+	return FloatRect(x, y, 16, 16);
+}
+
+void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
+{
+	CCLayer** mapLayer = tilemap->m_mapLayer;
+	/* Which autotile [0-7] */
+	int atInd = tileInd / 48 - 1;
+	/* Which tile pattern of the autotile [0-47] */
+	int subInd = tileInd % 48;
+
+	CCSprite* autoTilsetSp = tilemap->p->autotiles[atInd]->getEmuBitmap();
+
+	const StaticRect *pieceRect = &autotileRects[subInd*4];
+	for (int i = 0; i < 4; ++i)
+	{
+		FloatRect posRect = getAutotilePieceRect(x*32, y*32, i);
+		FloatRect texRect = pieceRect[i];
+
+		/* Adjust to atlas coordinates */
+		texRect.y += atInd * autotileH;
+		texRect.x -=0.5;texRect.y-=0.5;texRect.w+=1;texRect.h+=1;
+
+		CCSprite* tilesp = CCSprite::createWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
+		mapLayer[z]->addChild(tilesp);
+		tilesp->setAnchorPoint(ccp(0,1));
+		tilesp->setPosition(ccp(posRect.x,rgss_y_to_cocos_y(posRect.y,mapLayer[z]->getContentSize().height)));
+
+		/*is a animte tile*/
+		if (autoTilsetSp->getContentSize().width>autotileW)
+		{
+			CCAnimation* animation= CCAnimation::create();
+			for (int j=0;j<4;j++)
+			{
+				animation->addSpriteFrameWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
+				texRect.x+=texRect.w*6;
+			}
+			animation->setDelayPerUnit(0.5f);
+			CCAnimate* animate = CCAnimate::create(animation);
+			tilesp->runAction(CCRepeatForever::create(animate));
+		}
+	}
+}
+
+
 int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 {
 	Tilemap* tilemap = (Tilemap*)ptr1;
@@ -357,10 +426,11 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	int mapDepth = mapData->zSize();
 	CCLayer** mapLayer = tilemap->m_mapLayer;
 
-	for (int i;i<3;i++)
+	for (int i=0;i<3;i++)
 	{
 		mapLayer[i] = CCLayer::create();
-		mapLayer[i]->setContentSize(CCSizeMake(mapWidth,mapHeight));
+		mapLayer[i]->setContentSize(CCSizeMake(mapWidth*tileW,mapHeight*tileW));
+		SceneMain::getMainLayer()->addChild(mapLayer[i]);
 	}
 
 	for (int x = 0; x < mapWidth; ++x)
@@ -373,29 +443,36 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 
 				/* Check for empty space */
 				if (tileInd < 48)
-					return 0;
+					continue;
 
 				int prio = tilemap->p->samplePriority(tileInd);
 
 				/* Check for faulty data */
 				if (prio == -1)
-					return 0;
+					continue;
 
 				/* Check for autotile */
 				if (tileInd < 48*8)
 				{
-					//handleAutotile(x, y, tileInd, targetArray);
-					return 0;
+					handleAutotile(tilemap,x,y,z,tileInd);
+					continue;
 				}
 
 				int tsInd = tileInd - 48*8;
 				int tileX = tsInd % 8;
 				int tileY = tsInd / 8;
 
-				//Vec2i texPos = TileAtlas::tileToAtlasCoor(tileX, tileY, atlas.efTilesetH, atlas.size.y);
-				//FloatRect texRect((float) texPos.x+.5, (float) texPos.y+.5, 31, 31);
-				FloatRect posRect(x*32, y*32, 32, 32);
+				CCSprite* tilesp = CCSprite::createWithTexture(tilesetSp->getTexture(),CCRectMake(tileX*tileW,tileY*tileW,tileW,tileW));
+				mapLayer[z]->addChild(tilesp);
+				tilesp->setAnchorPoint(ccp(0,1));
+				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,mapLayer[z]->getContentSize().height)));
 
+				int zoder = 0;
+				if (prio == 1)
+					zoder = 64;
+				if (prio>1)
+					zoder = 64 + (prio -1)*32;
+				tilesp->setZOrder(zoder);
 			}
 		}
 	}
@@ -407,6 +484,12 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 
 void Tilemap::drawMap()
 {
+	for (int i=0;i<autotileCount;i++)
+	{
+		if (p->autotiles[i] == NULL)
+			return;
+	}
+
 	if (p->tileset && p->autotiles && p->mapData)
 	{
 		ThreadHandler hander={handler_method_drawMap,(int)this,(void*)NULL};
@@ -414,4 +497,9 @@ void Tilemap::drawMap()
 		ThreadHandlerMananger::getInstance()->pushHandler(hander);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
+}
+
+void Tilemap::composite()
+{
+	
 }

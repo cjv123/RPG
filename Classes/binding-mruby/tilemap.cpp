@@ -253,8 +253,12 @@ Bitmap *Tilemap::Autotiles::get(int i) const
 	return p->autotiles[i];
 }
 
-Tilemap::Tilemap(Viewport *viewport)
+Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
 {
+	if (viewport == 0)
+	{
+		viewport = new Viewport(0,0,0,0);
+	}
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
 	p->tilemap = this;
@@ -425,12 +429,29 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	int mapHeight = tilemap->p->mapHeight;
 	int mapDepth = mapData->zSize();
 	CCLayer** mapLayer = tilemap->m_mapLayer;
+	Viewport* viewport = tilemap->p->viewport;
+
+	CCClippingNode* clipper = CCClippingNode::create(); 
+	tilemap->m_clippingNode = clipper;
+	CCLayerColor* maskLayer = CCLayerColor::create(ccc4(255,255,255,255));
+	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
+		maskLayer->setContentSize(CCSizeMake(SceneMain::getMainLayer()->getContentSize().width,SceneMain::getMainLayer()->getContentSize().height));
+	else
+		maskLayer->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
+	clipper->setStencil(maskLayer);
+	SceneMain::getMainLayer()->addChild(clipper);
+
+	maskLayer->setPosition(ccp(viewport->getOX(),
+		rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
+	
+	clipper->setPosition(ccp(-clipper->getPositionX()+viewport->getRect()->getX(),
+		-clipper->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
 
 	for (int i=0;i<3;i++)
 	{
 		mapLayer[i] = CCLayer::create();
 		mapLayer[i]->setContentSize(CCSizeMake(mapWidth*tileW,mapHeight*tileW));
-		SceneMain::getMainLayer()->addChild(mapLayer[i]);
+		clipper->addChild(mapLayer[i]);
 	}
 
 	for (int x = 0; x < mapWidth; ++x)
@@ -499,7 +520,23 @@ void Tilemap::drawMap()
 	}
 }
 
+int Tilemap::handler_method_composite( int ptr1,void* ptr2 )
+{
+	Tilemap* tilemap = (Tilemap*)ptr1;
+	Viewport* viewport = tilemap->p->viewport;
+	if (viewport)
+	{
+		
+	}
+
+	return 0;
+}
+
+
 void Tilemap::composite()
 {
-	
+	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }

@@ -5,6 +5,7 @@
 
 #include "util.h"
 #include <cocos2d.h>
+#include "viewport.h"
 using namespace cocos2d;
 
 class Viewport;
@@ -50,9 +51,11 @@ public:
 private:
 	TilemapPrivate *p;
 	CCLayer* m_mapLayer[3];
+	CCClippingNode* m_clippingNode;
 
 	static int handler_method_drawMap(int prt1,void* ptr2);
 	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd);
+	static int Tilemap::handler_method_composite( int ptr1,void* ptr2 );
 	void drawMap();
 
 	void releaseResources();

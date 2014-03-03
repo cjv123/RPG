@@ -259,6 +259,7 @@ Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
 	{
 		viewport = new Viewport(0,0,0,0);
 	}
+	viewport->addDelegate(this);
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
 	p->tilemap = this;
@@ -292,27 +293,18 @@ DEF_ATTR_RD_SIMPLE(Tilemap, Visible, bool, p->visible)
 DEF_ATTR_RD_SIMPLE(Tilemap, OX, int, p->offset.x)
 DEF_ATTR_RD_SIMPLE(Tilemap, OY, int, p->offset.y)
 
-#ifdef RGSS2
 
 void Tilemap::setViewport(Viewport *value)
 {
-	GUARD_DISPOSED
 
 	if (p->viewport == value)
 		return;
 
 	p->viewport = value;
+	p->viewport->addDelegate(this);
 
-	if (!p->tilemapReady)
-		return;
-
-	p->elem.ground->setViewport(value);
-
-	for (size_t i = 0; i < p->elem.scanrows.size(); ++i)
-		p->elem.scanrows[i]->setViewport(value);
 }
 
-#endif
 
 void Tilemap::setTileset(Bitmap *value)
 {
@@ -386,6 +378,8 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 	int subInd = tileInd % 48;
 
 	CCSprite* autoTilsetSp = tilemap->p->autotiles[atInd]->getEmuBitmap();
+	if(NULL == autoTilsetSp)
+		return;
 
 	const StaticRect *pieceRect = &autotileRects[subInd*4];
 	for (int i = 0; i < 4; ++i)
@@ -394,7 +388,7 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 		FloatRect texRect = pieceRect[i];
 
 		/* Adjust to atlas coordinates */
-		texRect.y += atInd * autotileH;
+		//texRect.y += atInd * autotileH;
 		texRect.x -=0.5;texRect.y-=0.5;texRect.w+=1;texRect.h+=1;
 
 		CCSprite* tilesp = CCSprite::createWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
@@ -411,7 +405,7 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 				animation->addSpriteFrameWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
 				texRect.x+=texRect.w*6;
 			}
-			animation->setDelayPerUnit(0.5f);
+			animation->setDelayPerUnit(0.4f);
 			CCAnimate* animate = CCAnimate::create(animation);
 			tilesp->runAction(CCRepeatForever::create(animate));
 		}
@@ -441,6 +435,7 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	clipper->setStencil(maskLayer);
 	SceneMain::getMainLayer()->addChild(clipper);
 
+	
 	maskLayer->setPosition(ccp(viewport->getOX(),
 		rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
 	
@@ -524,9 +519,24 @@ int Tilemap::handler_method_composite( int ptr1,void* ptr2 )
 {
 	Tilemap* tilemap = (Tilemap*)ptr1;
 	Viewport* viewport = tilemap->p->viewport;
+	int mapWidth = tilemap->p->mapWidth;
+	int mapHeight = tilemap->p->mapHeight;
 	if (viewport)
 	{
-		
+		CCClippingNode* clipper = tilemap->m_clippingNode;
+		CCLayerColor* maskLayer = (CCLayerColor*)clipper->getStencil();
+		if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
+			maskLayer->setContentSize(CCSizeMake(SceneMain::getMainLayer()->getContentSize().width,SceneMain::getMainLayer()->getContentSize().height));
+		else
+			maskLayer->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
+
+
+		maskLayer->setPosition(ccp(viewport->getOX(),
+			rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
+
+		clipper->setPosition(ccp(-maskLayer->getPositionX()+viewport->getRect()->getX(),
+			-maskLayer->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
+
 	}
 
 	return 0;

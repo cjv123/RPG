@@ -444,8 +444,8 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	maskLayer->setPosition(ccp(viewport->getOX(),
 		rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
 	
-	clipper->setPosition(ccp(-clipper->getPositionX()+viewport->getRect()->getX(),
-		-clipper->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
+	clipper->setPosition(ccp(-maskLayer->getPositionX()+viewport->getRect()->getX(),
+		-maskLayer->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
 
 	for (int i=0;i<3;i++)
 	{

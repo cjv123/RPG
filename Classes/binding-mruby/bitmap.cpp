@@ -1,6 +1,7 @@
 #include "bitmap.h"
 #include "font.h"
 #include "../ThreadHandlerManager.h"
+#include "binding-util.h"
 
 #define DISP_CLASS_NAME "bitmap"
 
@@ -23,7 +24,19 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 {
 	Bitmap* bitmap = (Bitmap*)bitmap_instance;
 	string* filename_c = (string*)filename;
-	CCSprite* sp = CCSprite::create(filename_c->c_str());
+	CCSprite* sp = NULL;
+	if (filename)
+	{
+		sp = CCSprite::create(filename_c->c_str());
+		bitmap->m_width = sp->getContentSize().width;
+		bitmap->m_height = sp->getContentSize().height;
+	}
+	else
+	{
+		sp = CCSprite::create();
+		sp->setContentSize(CCSizeMake(bitmap->m_width,bitmap->m_height));
+	}
+	sp->getTexture()->setAliasTexParameters();
 	bitmap->m_emuBitmap = sp;
 	sp->retain();
 	delete filename;
@@ -49,6 +62,12 @@ Bitmap::Bitmap(int width, int height) : m_emuBitmap(NULL)
 {
 	m_width = width;
 	m_height = height;
+
+	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)0};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+
 	p = new BitmapPrivate;
 }
 
@@ -95,7 +114,7 @@ IntRect Bitmap::rect() const
 }
 
 void Bitmap::blt(int x, int y,
-                  const Bitmap &source, const IntRect &rect,
+                   Bitmap *source, const IntRect &rect,
                   int opacity)
 {
 	stretchBlt(IntRect(x, y, rect.w, rect.h),
@@ -107,6 +126,7 @@ struct Blt_handler_ptr_struct
 	IntRect desRect;
 	IntRect sourceRect;
 	Bitmap* source;
+	int opacity;
 };
 
 int Bitmap::handler_method_blt( int ptr1,void* ptr2 )
@@ -120,7 +140,9 @@ int Bitmap::handler_method_blt( int ptr1,void* ptr2 )
 		CCTexture2D* srouceTexture =sourceSprite->getTexture();
 		CCSprite* sSprite = CCSprite::createWithTexture(srouceTexture,CCRectMake(ptrstr->sourceRect.x,ptrstr->sourceRect.y,ptrstr->sourceRect.w,ptrstr->sourceRect.h));
 		desSprite->addChild(sSprite);
-		sSprite->setPosition(ccp(ptrstr->desRect.x,ptrstr->desRect.y));
+		sSprite->setAnchorPoint(ccp(0,1));
+		sSprite->setPosition(ccp(ptrstr->desRect.x,rgss_y_to_cocos_y(ptrstr->desRect.y,desbitmap->m_height)));
+		sSprite->setOpacity(ptrstr->opacity);
 	}
 
 	delete ptrstr;
@@ -128,12 +150,11 @@ int Bitmap::handler_method_blt( int ptr1,void* ptr2 )
 }
 
 void Bitmap::stretchBlt(const IntRect &destRect,
-                        const Bitmap &source, const IntRect &sourceRect,
+                        Bitmap *source, const IntRect &sourceRect,
                         int opacity)
 {
-	Bitmap& s = (Bitmap)source;
 	Blt_handler_ptr_struct* ptr2= new Blt_handler_ptr_struct;
-	ptr2->desRect=destRect;ptr2->sourceRect=sourceRect;ptr2->source = &s;
+	ptr2->desRect=destRect;ptr2->sourceRect=sourceRect;ptr2->source = source;ptr2->opacity = opacity;
 	ThreadHandler hander={handler_method_blt,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
@@ -150,19 +171,22 @@ void Bitmap::fillRect(int x, int y,
 struct FillRectStruct
 {
 	IntRect rect;
-	ccColor4B color;
+	Vec4 color;
 };
 
 int Bitmap::handler_method_fill( int ptr1, void* ptr2 )
 {
 	FillRectStruct* ptr2str = (FillRectStruct*)ptr2;
 	Bitmap* bitmap =(Bitmap*)ptr1;
-
+	
 	if (NULL!=bitmap->m_emuBitmap)
 	{
-		CCLayerColor* layerColor = CCLayerColor::create(ptr2str->color);
+		Vec4 color = ptr2str->color;
+		CCLayerColor* layerColor = CCLayerColor::create(ccc4(color.x*255,color.y*255,color.z*255,color.w*255));
 		layerColor->setContentSize(CCSizeMake(ptr2str->rect.w,ptr2str->rect.h));
-		layerColor->setPosition(ccp(ptr2str->rect.x,ptr2str->rect.y));
+		layerColor->setAnchorPoint(ccp(0,1));
+		layerColor->ignoreAnchorPointForPosition(false);
+		layerColor->setPosition(ccp(ptr2str->rect.x,rgss_y_to_cocos_y(ptr2str->rect.y,bitmap->m_height)));
 		bitmap->m_emuBitmap->addChild(layerColor);
 	}
 
@@ -175,7 +199,7 @@ void Bitmap::fillRect(const IntRect &rect, const Vec4 &color)
 {
 	FillRectStruct* ptr2 = new FillRectStruct;
 	ptr2->rect = rect;
-	ptr2->color = ccc4(color.x,color.y,color.z,color.w);
+	ptr2->color = color;
 	ThreadHandler hander={handler_method_fill,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
@@ -278,6 +302,8 @@ struct DrawtextStruct
 int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 {
 	Bitmap* bitmap = (Bitmap*)ptr1;
+	if (NULL==bitmap->m_emuBitmap)
+		return -1;
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
 
 	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),FontPrivate::defaultName.c_str(),FontPrivate::defaultSize);
@@ -286,21 +312,23 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		label->setFontName(bitmap->p->font->getName());
 		label->setFontSize(bitmap->p->font->getSize());
 	}
+	label->setAnchorPoint(ccp(0,1));
 	label->setDimensions(CCSizeMake(ptr2struct->rect.w,ptr2struct->rect.h));
-	label->setPosition(ccp(ptr2struct->rect.x,ptr2struct->rect.y));
+	label->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)));
+	label->setVerticalAlignment(kCCVerticalTextAlignmentCenter);
 
 	if (ptr2struct->align == 1)
 		label->setHorizontalAlignment(kCCTextAlignmentCenter);
 	else if(ptr2struct->align == 2)
 		label->setHorizontalAlignment(kCCTextAlignmentRight);
 	bitmap->m_emuBitmap->addChild(label);
+
+	delete ptr2struct;
 	return 0;
 }
 
 void Bitmap::drawText(const IntRect &rect, const char *str, int align)
 {
-	if (NULL==m_emuBitmap)
-		return;
 	DrawtextStruct* ptr2 = new DrawtextStruct;
 	ptr2->rect = rect;ptr2->str = str;ptr2->align = align;
 	ThreadHandler hander={handler_method_drawtext,(int)this,(void*)ptr2};

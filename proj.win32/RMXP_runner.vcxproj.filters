@@ -87,6 +87,12 @@
     <ClCompile Include="..\Classes\binding-mruby\autotiles.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\window.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\window-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -144,6 +150,9 @@
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\binding-mruby\tilemap.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\window.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>

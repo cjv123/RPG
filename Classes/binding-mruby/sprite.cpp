@@ -98,7 +98,8 @@ struct SpritePrivate
 Sprite::Sprite(Viewport *viewport)
 {
 	p = new SpritePrivate;
-	setViewport(viewport);
+	if (NULL != viewport)
+		setViewport(viewport);
 }
 
 Sprite::~Sprite()

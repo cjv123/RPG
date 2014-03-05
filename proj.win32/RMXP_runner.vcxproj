@@ -150,6 +150,8 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClCompile Include="..\Classes\binding-mruby\tilemap.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\viewport-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\viewport.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\window-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\window.cpp" />
     <ClCompile Include="..\Classes\SceneMain.cpp" />
     <ClCompile Include="..\Classes\ThreadHandlerManager.cpp" />
     <ClCompile Include="main.cpp" />
@@ -171,6 +173,7 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClInclude Include="..\Classes\binding-mruby\table.h" />
     <ClInclude Include="..\Classes\binding-mruby\tilemap.h" />
     <ClInclude Include="..\Classes\binding-mruby\viewport.h" />
+    <ClInclude Include="..\Classes\binding-mruby\window.h" />
     <ClInclude Include="..\Classes\SceneMain.h" />
     <ClInclude Include="..\Classes\ThreadHandlerManager.h" />
     <ClInclude Include="main.h" />

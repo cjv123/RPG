@@ -25,6 +25,7 @@ extern void spriteBindingInit(mrb_state *mrb);
 extern void graphicsBindingInit(mrb_state *mrb);
 extern void viewportBindingInit(mrb_state *mrb);
 extern void tilemapBindingInit(mrb_state *mrb);
+extern void windowBindingInit(mrb_state *mrb);
 
 
 static const char * mrbValueString(mrb_value value)
@@ -66,6 +67,7 @@ void RubyEngine::initBindingMethod()
 	spriteBindingInit(m_mrb);
 	viewportBindingInit(m_mrb);
 	tilemapBindingInit(m_mrb);
+	windowBindingInit(m_mrb);
 
 	mrb_load_irep(m_mrb, mrbModuleRPG);
 	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());

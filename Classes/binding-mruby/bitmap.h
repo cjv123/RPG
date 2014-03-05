@@ -27,11 +27,11 @@ public:
 	IntRect rect() const;
 
 	void blt(int x, int y,
-	         const Bitmap &source, const IntRect &rect,
+	          Bitmap *source, const IntRect &rect,
 	         int opacity = 255);
 
 	void stretchBlt(const IntRect &destRect,
-	                const Bitmap &source, const IntRect &sourceRect,
+	                 Bitmap *source, const IntRect &sourceRect,
 	                int opacity = 255);
 
 	void fillRect(int x, int y,

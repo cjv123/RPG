@@ -60,30 +60,6 @@ static const Position positions[] =
 
 static elementsN(positions);
 
-/* Autotile animation */
-static const uint8_t atAnimation[16*4] =
-{
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-};
-
-static elementsN(atAnimation);
-
-/* Flash tiles pulsing opacity */
-static const uint8_t flashAlpha[] =
-{
-	/* Fade in */
-	0x3C, 0x3C, 0x3C, 0x3C, 0x4B, 0x4B, 0x4B, 0x4B,
-	0x5A, 0x5A, 0x5A, 0x5A, 0x69, 0x69, 0x69, 0x69,
-	/* Fade out */
-	0x78, 0x78, 0x78, 0x78, 0x69, 0x69, 0x69, 0x69,
-	0x5A, 0x5A, 0x5A, 0x5A, 0x4B, 0x4B, 0x4B, 0x4B
-};
-
-static elementsN(flashAlpha);
-
 struct TilemapPrivate
 {
 	Viewport *viewport;
@@ -338,11 +314,13 @@ void Tilemap::setVisible(bool value)
 void Tilemap::setOX(int value)
 {
 	p->offset.x = value;
+	p->viewport->setOX(value);
 }
 
 void Tilemap::setOY(int value)
 {
 	p->offset.y = value;
+	p->viewport->setOY(value);	
 }
 
 

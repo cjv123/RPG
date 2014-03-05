@@ -333,16 +333,19 @@ void Tilemap::setPriorities(Table *value)
 void Tilemap::setVisible(bool value)
 {
 	p->visible = value;
+	
 }
 
 void Tilemap::setOX(int value)
 {
 	p->offset.x = value;
+	p->viewport->setOX(value);
 }
 
 void Tilemap::setOY(int value)
 {
 	p->offset.y = value;
+	p->viewport->setOY(value);
 }
 
 

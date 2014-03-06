@@ -5,6 +5,8 @@
 #include "disposable.h"
 
 #include "util.h"
+#include <cocos-ext.h>
+using namespace cocos2d::extension;
 
 class Bitmap;
 struct Rect;
@@ -34,13 +36,12 @@ public:
 	DECL_ATTR( Opacity,         int     )
 	DECL_ATTR( BackOpacity,     int     )
 	DECL_ATTR( ContentsOpacity, int     )
-
+	DECL_ATTR( Visible, bool     )
 private:
 	WindowPrivate *p;
 
 	void draw();
 	void setZ(int value);
-	void setVisible(bool value);
 
 	void releaseResources();
 
@@ -51,9 +52,12 @@ private:
 	static int handler_method_create_winnode(int par1,void* par2);
 	static int handler_method_draw_window(int par1,void* par2);
 	static int handler_method_set_prop(int ptr1,void* ptr2);
+	static int handler_method_set_cursor_rect(int ptr1,void* ptr2);
 
-	CCNode* m_winNode;
+	CCNodeRGBA* m_winNode;
 	CCSprite* m_winsp;
+	CCNodeRGBA* m_contentNode;
+	CCScale9Sprite* m_cursorSp;
 };
 
 #endif // WINDOW_H

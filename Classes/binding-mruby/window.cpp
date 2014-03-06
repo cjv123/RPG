@@ -6,8 +6,7 @@
 #include "etc-internal.h"
 #include "../ThreadHandlerManager.h"
 #include "SceneMain.h"
-#include <cocos-ext.h>
-using namespace cocos2d::extension;
+
 
 template<typename T>
 struct Sides
@@ -20,6 +19,9 @@ struct Corners
 {
 	T tl, tr, bl, br;
 };
+
+static int window_z_base = 100;
+static int content_z = 200;
 
 static IntRect backgroundSrc(0, 0, 128, 128);
 
@@ -94,6 +96,7 @@ struct WindowPrivate
 	Rect *cursorRect;
 	bool active;
 	bool pause;
+	bool visible;
 
 	Vec2i sceneOffset;
 
@@ -123,7 +126,8 @@ struct WindowPrivate
 	      contentsOpacity(255),
 	      baseVertDirty(true),
 	      opacityDirty(true),
-	      baseTexDirty(true)
+	      baseTexDirty(true),
+		  visible(true)
 	{
 		
 	}
@@ -138,11 +142,21 @@ extern pthread_mutex_t s_thread_handler_mutex;
 int Window::handler_method_create_winnode( int par1,void* par2 )
 {
 	Window* window = (Window*)par1;
-	window->m_winNode = CCNode::create();
+	window->m_winNode = CCNodeRGBA::create();
+	window->m_winNode->setCascadeOpacityEnabled(true);
+	SceneMain::getMainLayer()->addChild(window->m_winNode);
+
+	window->m_contentNode = CCNodeRGBA::create();
+	window->m_contentNode->setCascadeColorEnabled(true);
+	//window->m_winNode->addChild(window->m_contentNode,content_z);
+	window->m_contentNode->setAnchorPoint(ccp(0,0));
+	window->m_contentNode->setPosition(ccp(16,16));
+
+
 	return 0;
 }
 
-Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0)
+Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0)
 {
 	p = new WindowPrivate(viewport);
 
@@ -164,8 +178,8 @@ void Window::update()
 
 #define DISP_CLASS_NAME "window"
 
-DEF_ATTR_SIMPLE(Window, X,          int,     p->position.x)
-DEF_ATTR_SIMPLE(Window, Y,          int,     p->position.y)
+DEF_ATTR_RD_SIMPLE(Window, X,          int,     p->position.x)
+DEF_ATTR_RD_SIMPLE(Window, Y,          int,     p->position.y)
 
 DEF_ATTR_RD_SIMPLE(Window, Windowskin,      Bitmap*, p->windowskin)
 DEF_ATTR_RD_SIMPLE(Window, Contents,        Bitmap*, p->contents)
@@ -180,6 +194,7 @@ DEF_ATTR_RD_SIMPLE(Window, OY,              int,     p->contentsOffset.y)
 DEF_ATTR_RD_SIMPLE(Window, Opacity,         int,     p->opacity)
 DEF_ATTR_RD_SIMPLE(Window, BackOpacity,     int,     p->backOpacity)
 DEF_ATTR_RD_SIMPLE(Window, ContentsOpacity, int,     p->contentsOpacity)
+DEF_ATTR_RD_SIMPLE(Window, Visible, bool,     p->visible)
 
 void Window::setWindowskin(Bitmap *value)
 {
@@ -195,13 +210,78 @@ void Window::setContents(Bitmap *value)
 	p->contents = value;
 }
 
+struct SetPropStruct
+{
+	enum type{x=0,y,z,visible,opacity,back_opacity,contents_opacity};
+	SetPropStruct::type prop_type;
+	int value;
+};
 
 int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 {
+	Window* window = (Window*)ptr1;
+	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
+	int value = propstruct->value;
+	switch (propstruct->prop_type)
+	{
+	case SetPropStruct::x:
+		window->m_winNode->setPositionX(value);
+		break;
+	case SetPropStruct::y:
+		window->m_winNode->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
+		break;
+	case SetPropStruct::z:
+		window->m_winNode->setZOrder(window_z_base+value);
+		break;
+	case SetPropStruct::visible:
+		window->m_winNode->setVisible((bool)value);
+		break;
+	case SetPropStruct::opacity:
+		window->m_winNode->setOpacity(value);
+		break;
+	case SetPropStruct::back_opacity:
+		if (window->m_winsp)
+		{
+			window->m_winsp->setOpacity(value);
+		}
+		break;
+	case SetPropStruct::contents_opacity:
+		if (window->m_contentNode)
+		{
+			window->m_contentNode->setOpacity(value);
+		}
+		break;
 
+	}
+
+	delete propstruct;
+	
 	return 0;
 }
 
+void Window::setX(int value)
+{
+	p->position.x = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::x;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+}
+
+void Window::setY(int value)
+{
+	p->position.y = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::y;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+}
 
 void Window::setStretch(bool value)
 {
@@ -211,6 +291,35 @@ void Window::setStretch(bool value)
 	p->bgStretch = value;
 }
 
+
+int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+
+	if(window->p->cursorRect && window->p->windowskin && window->m_contentNode)
+	{
+		CCSprite* skipsp = window->p->windowskin->getEmuBitmap();
+		if(window->m_cursorSp)
+			window->m_cursorSp->removeFromParentAndCleanup(true);
+		CCScale9Sprite* cursorSp = CCScale9Sprite::createWithSpriteFrame(
+			CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
+		window->m_contentNode->addChild(cursorSp);
+		window->m_cursorSp = cursorSp;
+		cursorSp->setAnchorPoint(ccp(0,1));
+		cursorSp->setCapInsets(CCRectMake(1,1,cursorSrc.w-2,cursorSrc.h-2));
+		cursorSp->setContentSize(CCSizeMake(window->p->cursorRect->width,window->p->cursorRect->height));
+		cursorSp->setPosition(ccp(window->p->cursorRect->x,rgss_y_to_cocos_y(window->p->cursorRect->y,window->m_contentNode->getContentSize().height)));
+
+		if (window->p->active)
+		{
+			CCSequence* seq = CCSequence::create(CCFadeTo::create(0.3f,50),CCFadeTo::create(0.3f,255),NULL);
+			cursorSp->runAction(CCRepeatForever::create(seq));
+		}
+	}
+	return 0;
+}
+
+
 void Window::setCursorRect(Rect *value)
 {
 	if (p->cursorRect == value)
@@ -218,6 +327,10 @@ void Window::setCursorRect(Rect *value)
 
 	p->cursorRect = value;
 
+	ThreadHandler hander={handler_method_set_cursor_rect,(int)this,(void*)value};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setActive(bool value)
@@ -276,6 +389,13 @@ void Window::setOpacity(int value)
 		return;
 
 	p->opacity = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::opacity;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setBackOpacity(int value)
@@ -284,6 +404,13 @@ void Window::setBackOpacity(int value)
 		return;
 
 	p->backOpacity = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::back_opacity;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setContentsOpacity(int value)
@@ -292,6 +419,13 @@ void Window::setContentsOpacity(int value)
 		return;
 
 	p->contentsOpacity = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::contents_opacity;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::draw()
@@ -306,12 +440,19 @@ void Window::setZ(int value)
 
 void Window::setVisible(bool value)
 {
-	
+	p->visible = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::visible;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::releaseResources()
 {
-
+	m_winNode->removeAllChildrenWithCleanup(true);
 	delete p;
 }
 
@@ -327,11 +468,12 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 		return -1;
 
 	CCNode* winnode = window->m_winNode;
+	winnode->removeAllChildrenWithCleanup(true);
 	winnode->setContentSize(CCSizeMake(window->p->size.x,window->p->size.y));
 	winnode->setAnchorPoint(ccp(0,1));
 	winnode->setPosition(ccp(window->p->position.x,
 		rgss_y_to_cocos_y(window->p->position.y,SceneMain::getMainLayer()->getContentSize().height)));
-	SceneMain::getMainLayer()->addChild(winnode);
+	
 	CCSprite* skipsp = window->p->windowskin->getEmuBitmap();
 	CCSprite* winsp = CCSprite::createWithTexture(skipsp->getTexture(),
 		CCRectMake(backgroundSrc.x,backgroundSrc.y,backgroundSrc.w,backgroundSrc.h));
@@ -359,6 +501,12 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	CCSprite* borderf = CCSprite::createWithTexture(renderTexture->getSprite()->getTexture());
 	winnode->addChild(borderf);
 	borderf->setAnchorPoint(ccp(0,0));
+
+	CCNodeRGBA* contentNode = window->m_contentNode;
+	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
+	winnode->addChild(contentNode);
+
+	handler_method_set_cursor_rect((int)window,(void*)0);
 	return 0;
 }
 

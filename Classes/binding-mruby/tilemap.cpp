@@ -403,6 +403,8 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	CCLayer** mapLayer = tilemap->m_mapLayer;
 	Viewport* viewport = tilemap->p->viewport;
 
+	if (NULL!=tilemap->m_clippingNode)
+		tilemap->m_clippingNode->removeFromParentAndCleanup(true);
 	CCClippingNode* clipper = CCClippingNode::create(); 
 	tilemap->m_clippingNode = clipper;
 	CCLayerColor* maskLayer = CCLayerColor::create(ccc4(255,255,255,255));

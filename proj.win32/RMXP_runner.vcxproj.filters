@@ -93,6 +93,21 @@
     <ClCompile Include="..\Classes\binding-mruby\window-binding.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\audio-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\input-binding.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\file.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\time.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\input.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -153,6 +168,9 @@
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\binding-mruby\window.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\input.h">
       <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>

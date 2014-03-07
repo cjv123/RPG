@@ -47,6 +47,7 @@ DEF_PROP_I(Window, OY)
 DEF_PROP_I(Window, Opacity)
 DEF_PROP_I(Window, BackOpacity)
 DEF_PROP_I(Window, ContentsOpacity)
+DEF_PROP_I(Window, Z)
 
 
 void windowBindingInit(mrb_state *mrb)
@@ -73,6 +74,7 @@ void windowBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Window, Opacity,         "opacity"          );
 	INIT_PROP_BIND( Window, BackOpacity,     "back_opacity"     );
 	INIT_PROP_BIND( Window, ContentsOpacity, "contents_opacity" );
+	INIT_PROP_BIND( Window, Z, "z" );
 
 	mrb_define_method(mrb, klass, "inspect", inspectObject, MRB_ARGS_NONE());
 }

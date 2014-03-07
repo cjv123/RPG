@@ -86,12 +86,12 @@ MRB_FUNCTION(FontGetDefaultName)
 
 MRB_FUNCTION(FontSetDefaultName)
 {
-	mrb_value nameObj;
-	mrb_get_args(mrb, "S", &nameObj);
+	//mrb_value nameObj;
+	//mrb_get_args(mrb, "S", &nameObj);
 
-	Font::setDefaultName(RSTRING_PTR(nameObj));
+	//Font::setDefaultName(RSTRING_PTR(nameObj));
 
-	return nameObj;
+	return mrb_nil_value();
 }
 
 MRB_METHOD(FontGetDefaultColor)

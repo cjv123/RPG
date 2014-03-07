@@ -23,11 +23,22 @@ struct BitmapPrivate
 int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 {
 	Bitmap* bitmap = (Bitmap*)bitmap_instance;
-	string* filename_c = (string*)filename;
 	CCSprite* sp = NULL;
-	if (filename)
+	string* path = (string*)filename;
+	if (path)
 	{
-		sp = CCSprite::create(filename_c->c_str());
+		string filename_c;
+		if (path->find(".png") == string::npos)
+			filename_c+=*path + ".png";
+		
+		sp = CCSprite::create(filename_c.c_str());
+		if (!sp)
+		{
+			filename_c = *path + ".jpg";
+			sp = CCSprite::create(filename_c.c_str());
+		}
+		CCAssert(sp,"fuck! image file error!");
+
 		bitmap->m_width = sp->getContentSize().width;
 		bitmap->m_height = sp->getContentSize().height;
 	}
@@ -39,7 +50,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 	sp->getTexture()->setAliasTexParameters();
 	bitmap->m_emuBitmap = sp;
 	sp->retain();
-	delete filename;
+	delete path;
 	return 0;
 }
 
@@ -47,8 +58,7 @@ extern pthread_mutex_t s_thread_handler_mutex;
 Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL)
 {
 	string* path = new string(filename);
-	if (path->find(".png") == string::npos)
-		*path+=".png";
+	
 	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)path};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
@@ -317,10 +327,12 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	label->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)));
 	label->setVerticalAlignment(kCCVerticalTextAlignmentCenter);
 
-	if (ptr2struct->align == 1)
+	if (ptr2struct->align == Bitmap::Center)
 		label->setHorizontalAlignment(kCCTextAlignmentCenter);
-	else if(ptr2struct->align == 2)
+	else if(ptr2struct->align == Bitmap::Right)
 		label->setHorizontalAlignment(kCCTextAlignmentRight);
+	else if (ptr2struct->align == Bitmap::Left)
+		label->setHorizontalAlignment(kCCTextAlignmentLeft);
 	bitmap->m_emuBitmap->addChild(label);
 
 	delete ptr2struct;

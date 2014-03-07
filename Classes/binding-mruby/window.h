@@ -37,11 +37,11 @@ public:
 	DECL_ATTR( BackOpacity,     int     )
 	DECL_ATTR( ContentsOpacity, int     )
 	DECL_ATTR( Visible, bool     )
+	DECL_ATTR( Z, int    )
 private:
 	WindowPrivate *p;
 
 	void draw();
-	void setZ(int value);
 
 	void releaseResources();
 
@@ -53,6 +53,7 @@ private:
 	static int handler_method_draw_window(int par1,void* par2);
 	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_set_cursor_rect(int ptr1,void* ptr2);
+	static int handler_method_set_content(int ptr1,void* ptr2);
 
 	CCNodeRGBA* m_winNode;
 	CCSprite* m_winsp;

@@ -21,7 +21,8 @@ struct Corners
 };
 
 static int window_z_base = 100;
-static int content_z = 200;
+static int cursor_z = 200;
+static int bgOpacity = 255;
 
 static IntRect backgroundSrc(0, 0, 128, 128);
 
@@ -97,6 +98,7 @@ struct WindowPrivate
 	bool active;
 	bool pause;
 	bool visible;
+	int z;
 
 	Vec2i sceneOffset;
 
@@ -148,7 +150,6 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 
 	window->m_contentNode = CCNodeRGBA::create();
 	window->m_contentNode->setCascadeColorEnabled(true);
-	//window->m_winNode->addChild(window->m_contentNode,content_z);
 	window->m_contentNode->setAnchorPoint(ccp(0,0));
 	window->m_contentNode->setPosition(ccp(16,16));
 
@@ -156,7 +157,7 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 	return 0;
 }
 
-Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0)
+Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0),m_cursorSp(0)
 {
 	p = new WindowPrivate(viewport);
 
@@ -195,6 +196,7 @@ DEF_ATTR_RD_SIMPLE(Window, Opacity,         int,     p->opacity)
 DEF_ATTR_RD_SIMPLE(Window, BackOpacity,     int,     p->backOpacity)
 DEF_ATTR_RD_SIMPLE(Window, ContentsOpacity, int,     p->contentsOpacity)
 DEF_ATTR_RD_SIMPLE(Window, Visible, bool,     p->visible)
+DEF_ATTR_RD_SIMPLE(Window, Z, int,     p->z)
 
 void Window::setWindowskin(Bitmap *value)
 {
@@ -202,10 +204,34 @@ void Window::setWindowskin(Bitmap *value)
 	drawWindow();
 }
 
+
+int Window::handler_method_set_content( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+	Bitmap* content = window->p->contents;
+	
+	if (window->m_contentNode &&
+		window->m_contentNode->getContentSize().width &&
+		window->m_contentNode->getContentSize().height &&
+		content && content->getEmuBitmap())
+	{
+		CCSprite* contentsp = content->getEmuBitmap();
+		window->m_contentNode->addChild(contentsp);
+		contentsp->setAnchorPoint(ccp(0,1));
+		contentsp->setPosition(ccp(0,rgss_y_to_cocos_y(0,window->m_contentNode->getContentSize().height)));
+	}
+	return 0;
+}
+
 void Window::setContents(Bitmap *value)
 {
 	if (p->contents == value)
 		return;
+
+	ThreadHandler hander={handler_method_set_content,(int)this,(void*)0};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 	p->contents = value;
 }
@@ -251,7 +277,6 @@ int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 			window->m_contentNode->setOpacity(value);
 		}
 		break;
-
 	}
 
 	delete propstruct;
@@ -296,14 +321,17 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 {
 	Window* window = (Window*)ptr1;
 
-	if(window->p->cursorRect && window->p->windowskin && window->m_contentNode)
+	if(window->p->cursorRect && window->p->cursorRect->width && window->p->cursorRect->height
+		&& window->p->windowskin
+		&& window->p->windowskin->getEmuBitmap()
+		&& window->m_contentNode)
 	{
 		CCSprite* skipsp = window->p->windowskin->getEmuBitmap();
-		if(window->m_cursorSp)
+		if(window->m_cursorSp && window->m_cursorSp->getParent())
 			window->m_cursorSp->removeFromParentAndCleanup(true);
 		CCScale9Sprite* cursorSp = CCScale9Sprite::createWithSpriteFrame(
 			CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
-		window->m_contentNode->addChild(cursorSp);
+		window->m_contentNode->addChild(cursorSp,cursor_z);
 		window->m_cursorSp = cursorSp;
 		cursorSp->setAnchorPoint(ccp(0,1));
 		cursorSp->setCapInsets(CCRectMake(1,1,cursorSrc.w-2,cursorSrc.h-2));
@@ -435,7 +463,15 @@ void Window::draw()
 
 void Window::setZ(int value)
 {
-	
+	return;
+	p->z = value;
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::z;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setVisible(bool value)
@@ -481,6 +517,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	winnode->addChild(winsp);
 	winsp->setScaleX(window->p->size.x/winsp->getContentSize().width);
 	winsp->setScaleY(window->p->size.y/winsp->getContentSize().height);
+	winsp->setOpacity(bgOpacity);
 
 	CCScale9Sprite* border = CCScale9Sprite::createWithSpriteFrame(
 		CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(bordersSrc.x,bordersSrc.y,bordersSrc.w,bordersSrc.h)));
@@ -506,6 +543,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
 	winnode->addChild(contentNode);
 
+	handler_method_set_content( (int)window,(void*)0 );
 	handler_method_set_cursor_rect((int)window,(void*)0);
 	return 0;
 }
@@ -521,3 +559,4 @@ void Window::drawWindow()
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
 }
+

@@ -16,6 +16,7 @@ class RubyEngine
 {
 public:
 	RubyEngine();
+	~RubyEngine();
 	mrb_state* initAll();
 	mrb_state* initRubyEngine();
 	void initBindingMethod();

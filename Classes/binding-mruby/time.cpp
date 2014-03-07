@@ -1,32 +1,13 @@
-/*
-** time.cpp
-**
-** This file is part of mkxp.
-**
-** Copyright (C) 2013 Jonas Kulla <Nyocurio@gmail.com>
-**
-** mkxp is free software: you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation, either version 2 of the License, or
-** (at your option) any later version.
-**
-** mkxp is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with mkxp.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "../binding-util.h"
-
+#include "binding-util.h"
 #include <mruby/string.h>
 #include <mruby/array.h>
 #include <mruby/class.h>
 
-#include "time.h"
+#ifdef WIN32
+#include <CCStdC.h>
+#else
 #include <sys/time.h>
+#endif
 
 
 struct TimeImpl
@@ -47,7 +28,7 @@ timeFromSecondsInt(mrb_state *mrb, time_t seconds)
 	TimeImpl *p = new TimeImpl;
 
 	p->_tv.tv_sec = seconds;
-	p->_tm = *localtime(&p->_tv.tv_sec);
+	//p->_tm = *localtime(&p->_tv.tv_sec);
 
 	mrb_value obj = wrapObject(mrb, p, TimeType);
 
@@ -66,8 +47,8 @@ MRB_FUNCTION(timeNow)
 {
 	TimeImpl *p = new TimeImpl;
 
-	gettimeofday(&p->_tv, 0);
-	p->_tm = *localtime(&p->_tv.tv_sec);
+//	gettimeofday(&p->_tv, 0);
+//	p->_tm = *localtime(&p->_tv.tv_sec);
 
 	mrb_value obj = wrapObject(mrb, p, TimeType);
 
@@ -81,7 +62,7 @@ secondsAdded(mrb_state *mrb, TimeImpl *p, mrb_int seconds)
 	*newP = *p;
 
 	newP->_tv.tv_sec += seconds;
-	p->_tm = *localtime(&p->_tv.tv_sec);
+//	p->_tm = *localtime(&p->_tv.tv_sec);
 
 	return wrapObject(mrb, newP, TimeType);
 }
@@ -97,7 +78,7 @@ MRB_METHOD(timePlus)
 	*newP = *p;
 
 	newP->_tv.tv_sec += seconds;
-	p->_tm = *localtime(&p->_tv.tv_sec);
+//	p->_tm = *localtime(&p->_tv.tv_sec);
 
 	return wrapObject(mrb, newP, TimeType);
 }
@@ -197,8 +178,8 @@ TIME_ATTR(wday)
 void
 timeBindingInit(mrb_state *mrb)
 {
-	RClass *klass = mrb_define_class(mrb, "Time", 0);
-	mrb_include_module(mrb, klass, mrb_class_get(mrb, "Comparable"));
+	RClass *klass = mrb_define_class(mrb, "Time", mrb_class_get(mrb, "Object"));
+	mrb_include_module(mrb, klass, mrb_class_get(mrb, "Object"));
 
 	mrb_define_class_method(mrb, klass, "now", timeNow, MRB_ARGS_NONE());
 	mrb_define_class_method(mrb, klass, "at", timeAt, MRB_ARGS_REQ(1));

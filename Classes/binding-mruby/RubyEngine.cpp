@@ -26,6 +26,11 @@ extern void graphicsBindingInit(mrb_state *mrb);
 extern void viewportBindingInit(mrb_state *mrb);
 extern void tilemapBindingInit(mrb_state *mrb);
 extern void windowBindingInit(mrb_state *mrb);
+extern void inputBindingInit(mrb_state *mrb);
+extern void audioBindingInit(mrb_state* mrb);
+extern void timeBindingInit(mrb_state* mrb);
+extern void fileBindingInit(mrb_state* mrb);
+extern void inputBindingInit(mrb_state* mrb);
 
 
 static const char * mrbValueString(mrb_value value)
@@ -68,6 +73,11 @@ void RubyEngine::initBindingMethod()
 	viewportBindingInit(m_mrb);
 	tilemapBindingInit(m_mrb);
 	windowBindingInit(m_mrb);
+	inputBindingInit(m_mrb);
+	audioBindingInit(m_mrb);
+	timeBindingInit(m_mrb);
+	fileBindingInit(m_mrb);
+	inputBindingInit(m_mrb);
 
 	mrb_load_irep(m_mrb, mrbModuleRPG);
 	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());
@@ -197,7 +207,7 @@ void* RubyEngine::networkThread( void* data )
 		engine->checkException();
 	}
 
-	mrb_close(engine->m_mrb);
+	
 	pthread_exit(0);
 
 	pthread_mutex_destroy(&s_thread_handler_mutex);
@@ -210,7 +220,14 @@ RubyEngine::RubyEngine() : m_runRMXP(false)
 
 }
 
+
+RubyEngine::~RubyEngine()
+{
+	mrb_close(m_mrb);
+}
+
 bool RubyEngine::getRunRMXP()
 {
 	return m_runRMXP;
 }
+

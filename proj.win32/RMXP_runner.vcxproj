@@ -129,15 +129,19 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Classes\AppDelegate.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\audio-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\autotiles.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\binding-util.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\bitmap-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\bitmap.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\etc-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\etc.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\file.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\font-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\font.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\graphics-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\input-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\input.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\kernel.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\marshal.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\module_rpg.cpp" />
@@ -148,6 +152,7 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClCompile Include="..\Classes\binding-mruby\table.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\tilemap-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\tilemap.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\time.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\viewport-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\viewport.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\window-binding.cpp" />
@@ -166,6 +171,7 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClInclude Include="..\Classes\binding-mruby\etc.h" />
     <ClInclude Include="..\Classes\binding-mruby\flashable-binding.h" />
     <ClInclude Include="..\Classes\binding-mruby\font.h" />
+    <ClInclude Include="..\Classes\binding-mruby\input.h" />
     <ClInclude Include="..\Classes\binding-mruby\kernel.h" />
     <ClInclude Include="..\Classes\binding-mruby\marshal.h" />
     <ClInclude Include="..\Classes\binding-mruby\RubyEngine.h" />

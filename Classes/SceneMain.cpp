@@ -1,7 +1,61 @@
 #include "SceneMain.h"
 #include "ThreadHandlerManager.h"
+#include "binding-mruby/input.h"
 
 #define MAIN_LAYER_TAG 1000
+
+#ifdef WIN32
+static void key_down(UINT_PTR WPARAM)
+{
+	switch (WPARAM)
+	{
+	case VK_UP:
+		Input::getInstance()->button_status_map[Input::Up] = Input::Button_State_Just_Down;
+		break;
+	case VK_DOWN:
+		Input::getInstance()->button_status_map[Input::Down] = Input::Button_State_Just_Down;
+		break;
+	case VK_LEFT:
+		Input::getInstance()->button_status_map[Input::Left] = Input::Button_State_Just_Down;
+		break;
+	case VK_RIGHT:
+		Input::getInstance()->button_status_map[Input::Right] = Input::Button_State_Just_Down;
+		break;
+	}
+}
+
+static void key_up(UINT_PTR WPARAM)
+{
+	switch (WPARAM)
+	{
+	case VK_UP:
+		Input::getInstance()->button_status_map[Input::Up] = Input::Button_State_Up;
+		break;
+	case VK_DOWN:
+		Input::getInstance()->button_status_map[Input::Down] = Input::Button_State_Up;
+		break;
+	case VK_LEFT:
+		Input::getInstance()->button_status_map[Input::Left] = Input::Button_State_Up;
+		break;
+	case VK_RIGHT:
+		Input::getInstance()->button_status_map[Input::Right] = Input::Button_State_Up;
+		break;
+	}
+}
+
+static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
+{
+	switch (message)
+	{
+	case WM_KEYDOWN:
+		key_down(wParam);
+		break;
+	case WM_KEYUP:
+		key_up(wParam);
+		break;
+	}
+}
+#endif
 
 CCScene* SceneMain::scene()
 {
@@ -19,6 +73,9 @@ bool SceneMain::init()
 	{
 		return false;
 	}
+#ifdef WIN32
+	CCEGLView::sharedOpenGLView()->setAccelerometerKeyHook(key_handler);
+#endif
 	
 	ThreadHandlerMananger::getInstance();
 

@@ -246,8 +246,9 @@ void Sprite::setX(int value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->x = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setY(int value)
@@ -258,8 +259,9 @@ void Sprite::setY(int value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->y = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setZ(int value)
@@ -270,8 +272,9 @@ void Sprite::setZ(int value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->z = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setOX(int value)
@@ -282,8 +285,9 @@ void Sprite::setOX(int value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->ox = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setOY(int value)
@@ -294,8 +298,9 @@ void Sprite::setOY(int value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->oy = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setZoomX(float value)
@@ -306,8 +311,9 @@ void Sprite::setZoomX(float value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->zx = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setZoomY(float value)
@@ -318,8 +324,9 @@ void Sprite::setZoomY(float value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->zy = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setAngle(float value)
@@ -330,8 +337,9 @@ void Sprite::setAngle(float value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->angle = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setVisible(bool value)
@@ -342,8 +350,9 @@ void Sprite::setVisible(bool value)
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->isVisible = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 
@@ -363,8 +372,9 @@ void Sprite::setMirror(bool mirrored)
 	ThreadHandler hander={handler_method_set_mirror,(int)this,(void*)mirrored};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->mirrored = mirrored;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
@@ -384,8 +394,9 @@ void Sprite::setOpacity(int value)
 	ThreadHandler hander={handler_method_set_opacity,(int)this,(void*)value};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->opacity = value;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 void Sprite::setViewport(Viewport* value)

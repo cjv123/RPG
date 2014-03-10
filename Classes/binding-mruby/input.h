@@ -1,7 +1,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-struct InputPrivate;
+#include <map>
+using namespace std;
 
 class Input
 {
@@ -25,7 +26,11 @@ public:
 	};
 
 	static const int buttonCodeSize;
+	enum Button_Status_Type{Button_State_None=0,Button_State_Just_Down,Button_State_Down,Button_State_Up};
+	typedef map<ButtonCode,Button_Status_Type> Button_State_Map_Type;
+	static Button_State_Map_Type button_status_map;
 
+	static Input* getInstance();
 	void update();
 
 	bool isPressed(int button);
@@ -38,14 +43,10 @@ public:
 	/* Non-standard extensions */
 	int mouseX();
 	int mouseY();
-
 private:
 	Input();
 	~Input();
 
-	friend struct SharedStatePrivate;
-
-	InputPrivate *p;
 };
 
 #endif // INPUT_H

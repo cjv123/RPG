@@ -6,7 +6,7 @@ MRB_FUNCTION(inputUpdate)
 {
 	MRB_FUN_UNUSED_PARAM;
 
-
+	Input::getInstance()->update();
 	return mrb_nil_value();
 }
 
@@ -14,22 +14,27 @@ MRB_FUNCTION(inputPress)
 {
 	mrb_int num;
 	mrb_get_args(mrb, "i", &num);
+	bool ret = Input::getInstance()->isPressed(num);
 
-	return mrb_nil_value();
+	return mrb_bool_value(ret);
 }
 
 MRB_FUNCTION(inputTrigger)
 {
+	mrb_int num;
+	mrb_get_args(mrb, "i", &num);
+	bool ret =Input::getInstance()->isTriggered(num);
 
-
-	return mrb_nil_value();
+	return mrb_bool_value(ret);
 }
 
 MRB_FUNCTION(inputRepeat)
 {
+	mrb_int num;
+	mrb_get_args(mrb, "i", &num);
+	bool ret =Input::getInstance()->isRepeated(num);
 
-
-	return mrb_nil_value();
+	return mrb_bool_value(ret);
 }
 
 MRB_FUNCTION(inputDir4)

@@ -152,7 +152,7 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 	window->m_contentNode->setCascadeColorEnabled(true);
 	window->m_contentNode->setAnchorPoint(ccp(0,0));
 	window->m_contentNode->setPosition(ccp(16,16));
-
+	window->m_contentNode->retain();
 
 	return 0;
 }

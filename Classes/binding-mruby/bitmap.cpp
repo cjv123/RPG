@@ -27,7 +27,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 	string* path = (string*)filename;
 	if (path)
 	{
-		string filename_c;
+		string filename_c=*path;
 		if (path->find(".png") == string::npos)
 			filename_c+=*path + ".png";
 		

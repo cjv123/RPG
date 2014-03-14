@@ -7,29 +7,18 @@
 
 const int Input::buttonCodeSize = 24;
 
-Input::Button_State_Map_Type Input::button_status_map;
-
-
 void Input::update()
 {
-	Button_State_Map_Type::iterator it = button_status_map.begin();
-	for (;it!=button_status_map.end();it++)
-	{
-		if (it->second == Button_State_Up)
-		{
-			it->second = Button_State_None;
-		}
-		if (it->second == Button_State_Just_Down)
-		{
-			it->second == Button_State_Down;
-		}
-	}
+
+
+	
+	
 }
 
 bool Input::isPressed(int button)
 {
-	Button_State_Map_Type::iterator it = button_status_map.find((ButtonCode)button);
-	if (it == button_status_map.end())
+	Button_State_Map_Type::iterator it = m_buttonStateMap.find((ButtonCode)button);
+	if (it == m_buttonStateMap.end())
 		return false;
 	Button_Status_Type status = it->second;
 
@@ -42,12 +31,12 @@ bool Input::isPressed(int button)
 
 bool Input::isTriggered(int button)
 {
-	Button_State_Map_Type::iterator it = button_status_map.find((ButtonCode)button);
-	if (it == button_status_map.end())
+	Button_State_Map_Type::iterator it = m_buttonStateMap.find((ButtonCode)button);
+	if (it == m_buttonStateMap.end())
 		return false;
 	Button_Status_Type status = it->second;
 
-	if (status == Button_State_Just_Down)
+	if (status == Button_State_Down)
 	{
 		return true;
 	}
@@ -56,12 +45,12 @@ bool Input::isTriggered(int button)
 
 bool Input::isRepeated(int button)
 {
-	Button_State_Map_Type::iterator it = button_status_map.find((ButtonCode)button);
-	if (it == button_status_map.end())
+	Button_State_Map_Type::iterator it = m_buttonStateMap.find((ButtonCode)button);
+	if (it == m_buttonStateMap.end())
 		return false;
 	Button_Status_Type status = it->second;
 
-	if (status == Button_State_Up)
+	if (status == Button_State_Down)
 	{
 		return true;
 	}
@@ -81,10 +70,10 @@ int Input::mouseY()
 
 Input::Input()
 {
-	button_status_map.insert(Button_State_Map_Type::value_type(Up,Button_State_None));
-	button_status_map.insert(Button_State_Map_Type::value_type(Down,Button_State_None));
-	button_status_map.insert(Button_State_Map_Type::value_type(Left,Button_State_None));
-	button_status_map.insert(Button_State_Map_Type::value_type(Right,Button_State_None));
+	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Up,Button_State_None));
+	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Down,Button_State_None));
+	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Left,Button_State_None));
+	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Right,Button_State_None));
 }
 
 
@@ -97,4 +86,14 @@ Input* Input::getInstance()
 {
 	static Input input;
 	return &input;
+}
+
+void Input::pushkey( ButtonListStruct code )
+{
+	m_buttonCodeList.push_front(code);
+}
+
+void Input::popkey( ButtonListStruct code )
+{
+	m_buttonCodeList.pop_back();
 }

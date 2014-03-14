@@ -10,16 +10,16 @@ static void key_down(UINT_PTR WPARAM)
 	switch (WPARAM)
 	{
 	case VK_UP:
-		Input::getInstance()->button_status_map[Input::Up] = Input::Button_State_Just_Down;
+		Input::getInstance()->m_PressButtonList.push_front(Input::Up);
 		break;
 	case VK_DOWN:
-		Input::getInstance()->button_status_map[Input::Down] = Input::Button_State_Just_Down;
+		Input::getInstance()->m_PressButtonList.push_front(Input::Down);
 		break;
 	case VK_LEFT:
-		Input::getInstance()->button_status_map[Input::Left] = Input::Button_State_Just_Down;
+		Input::getInstance()->m_PressButtonList.push_front(Input::Left);
 		break;
 	case VK_RIGHT:
-		Input::getInstance()->button_status_map[Input::Right] = Input::Button_State_Just_Down;
+		Input::getInstance()->m_PressButtonList.push_front(Input::Right);
 		break;
 	}
 }

@@ -2,6 +2,7 @@
 #define INPUT_H
 
 #include <map>
+#include <list>
 using namespace std;
 
 class Input
@@ -25,10 +26,9 @@ public:
 		MouseLeft = 38, MouseMiddle = 39, MouseRight = 40
 	};
 
+	
 	static const int buttonCodeSize;
-	enum Button_Status_Type{Button_State_None=0,Button_State_Just_Down,Button_State_Down,Button_State_Up};
-	typedef map<ButtonCode,Button_Status_Type> Button_State_Map_Type;
-	static Button_State_Map_Type button_status_map;
+
 
 	static Input* getInstance();
 	void update();
@@ -43,10 +43,24 @@ public:
 	/* Non-standard extensions */
 	int mouseX();
 	int mouseY();
+
+	struct ButtonListStruct
+	{
+		ButtonCode code;
+		int isDown;
+	};
+	void pushkey(ButtonListStruct code);
+	void popkey(ButtonListStruct code);
 private:
 	Input();
 	~Input();
 
+	enum Button_Status_Type{Button_State_None=0,Button_State_Down,Button_State_Up};
+	typedef map<ButtonCode,Button_Status_Type> Button_State_Map_Type;
+
+	Button_State_Map_Type m_buttonStateMap;
+	
+	list<ButtonListStruct> m_buttonCodeList;
 };
 
 #endif // INPUT_H

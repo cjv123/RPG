@@ -53,6 +53,7 @@ DEF_PROP_OBJ(Viewport, Tone, Tone, CStone)
 
 DEF_PROP_I(Viewport, OX)
 DEF_PROP_I(Viewport, OY)
+DEF_PROP_I(Viewport, Z)
 
 
 void viewportBindingInit(mrb_state *mrb)
@@ -66,6 +67,7 @@ void viewportBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Viewport, Rect,  "rect"  );
 	INIT_PROP_BIND( Viewport, OX,    "ox"    );
 	INIT_PROP_BIND( Viewport, OY,    "oy"    );
+	INIT_PROP_BIND( Viewport, Z,    "z"    );
 	INIT_PROP_BIND( Viewport, Color, "color" );
 	INIT_PROP_BIND( Viewport, Tone,  "tone"  );
 

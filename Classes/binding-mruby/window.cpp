@@ -95,6 +95,7 @@ struct WindowPrivate
 	Bitmap *contents;
 	bool bgStretch;
 	Rect *cursorRect;
+	Rect lastRect;
 	bool active;
 	bool pause;
 	bool visible;
@@ -174,6 +175,14 @@ Window::~Window()
 
 void Window::update()
 {
+	if ( !(p->lastRect.x == p->cursorRect->x && p->lastRect.y == p->cursorRect->y && p->lastRect.width == p->cursorRect->width && p->lastRect.height==p->cursorRect->height) )
+	{
+		ThreadHandler hander={handler_method_set_cursor_rect,(int)this,(void*)p->cursorRect};
+		pthread_mutex_lock(&s_thread_handler_mutex);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		pthread_mutex_unlock(&s_thread_handler_mutex);
+		p->lastRect = *p->cursorRect;
+	}
 	
 }
 
@@ -327,22 +336,28 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 		&& window->m_contentNode)
 	{
 		CCSprite* skipsp = window->p->windowskin->getEmuBitmap();
+		CCScale9Sprite* cursorSp = NULL;
 		if(window->m_cursorSp && window->m_cursorSp->getParent())
-			window->m_cursorSp->removeFromParentAndCleanup(true);
-		CCScale9Sprite* cursorSp = CCScale9Sprite::createWithSpriteFrame(
+		{
+			cursorSp = window->m_cursorSp;
+		}
+		else
+		{
+			cursorSp = CCScale9Sprite::createWithSpriteFrame(
 			CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
-		window->m_contentNode->addChild(cursorSp,cursor_z);
-		window->m_cursorSp = cursorSp;
-		cursorSp->setAnchorPoint(ccp(0,1));
-		cursorSp->setCapInsets(CCRectMake(1,1,cursorSrc.w-2,cursorSrc.h-2));
+			window->m_contentNode->addChild(cursorSp,cursor_z);
+			window->m_cursorSp = cursorSp;
+			cursorSp->setAnchorPoint(ccp(0,1));
+			cursorSp->setCapInsets(CCRectMake(1,1,cursorSrc.w-2,cursorSrc.h-2));
+			
+			if (window->p->active)
+			{
+				CCSequence* seq = CCSequence::create(CCFadeTo::create(0.3f,50),CCFadeTo::create(0.3f,255),NULL);
+				cursorSp->runAction(CCRepeatForever::create(seq));
+			}
+		}
 		cursorSp->setContentSize(CCSizeMake(window->p->cursorRect->width,window->p->cursorRect->height));
 		cursorSp->setPosition(ccp(window->p->cursorRect->x,rgss_y_to_cocos_y(window->p->cursorRect->y,window->m_contentNode->getContentSize().height)));
-
-		if (window->p->active)
-		{
-			CCSequence* seq = CCSequence::create(CCFadeTo::create(0.3f,50),CCFadeTo::create(0.3f,255),NULL);
-			cursorSp->runAction(CCRepeatForever::create(seq));
-		}
 	}
 	return 0;
 }
@@ -354,7 +369,7 @@ void Window::setCursorRect(Rect *value)
 		return;
 
 	p->cursorRect = value;
-
+	p->lastRect = *value;
 	ThreadHandler hander={handler_method_set_cursor_rect,(int)this,(void*)value};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);

@@ -25,6 +25,7 @@ struct ViewportPrivate
 
 	int ox;
 	int oy;
+	int z;
 
 	ViewportPrivate(int x, int y, int width, int height, Viewport *self)
 	    : self(self),
@@ -90,10 +91,13 @@ Viewport::~Viewport()
 
 DEF_ATTR_RD_SIMPLE(Viewport, OX,   int,   p->ox)
 DEF_ATTR_RD_SIMPLE(Viewport, OY,   int,   p->oy)
+DEF_ATTR_RD_SIMPLE(Viewport, Z,   int,   p->z)
+
 DEF_ATTR_RD_SIMPLE(Viewport, Rect, Rect*, p->rect)
 
 DEF_ATTR_SIMPLE(Viewport, Color, Color*, p->color)
 DEF_ATTR_SIMPLE(Viewport, Tone, Tone*, p->tone)
+
 
 void Viewport::setOX(int value)
 {
@@ -104,6 +108,12 @@ void Viewport::setOX(int value)
 void Viewport::setOY(int value)
 {
 	p->oy = value;
+	composite();
+}
+
+void Viewport::setZ(int value)
+{
+	p->z = value;
 	composite();
 }
 

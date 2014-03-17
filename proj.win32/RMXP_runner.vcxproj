@@ -145,6 +145,8 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClCompile Include="..\Classes\binding-mruby\kernel.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\marshal.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\module_rpg.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\plane-binding.cpp" />
+    <ClCompile Include="..\Classes\binding-mruby\plane.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\RubyEngine.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\sprite-binding.cpp" />
     <ClCompile Include="..\Classes\binding-mruby\sprite.cpp" />
@@ -174,6 +176,7 @@ xcopy /Y /Q "$(ProjectDir)..\..\..\external\libwebsockets\win32\lib\*.*" "$(OutD
     <ClInclude Include="..\Classes\binding-mruby\input.h" />
     <ClInclude Include="..\Classes\binding-mruby\kernel.h" />
     <ClInclude Include="..\Classes\binding-mruby\marshal.h" />
+    <ClInclude Include="..\Classes\binding-mruby\plane.h" />
     <ClInclude Include="..\Classes\binding-mruby\RubyEngine.h" />
     <ClInclude Include="..\Classes\binding-mruby\sprite.h" />
     <ClInclude Include="..\Classes\binding-mruby\table.h" />

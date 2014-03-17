@@ -29,7 +29,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 	{
 		string filename_c=*path;
 		if (path->find(".png") == string::npos)
-			filename_c+=*path + ".png";
+			filename_c=*path + ".png";
 		
 		sp = CCSprite::create(filename_c.c_str());
 		if (!sp)

@@ -55,7 +55,7 @@ private:
 	Input();
 	~Input();
 
-	enum Button_Status_Type{Button_State_None=0,Button_State_Down,Button_State_Up};
+	enum Button_Status_Type{Button_State_None=0,Button_State_Just_Down,Button_State_Down,Button_State_Up};
 	typedef map<ButtonCode,Button_Status_Type> Button_State_Map_Type;
 
 	Button_State_Map_Type m_buttonStateMap;

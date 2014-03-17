@@ -4,56 +4,43 @@
 
 #define MAIN_LAYER_TAG 1000
 
+extern pthread_mutex_t s_input_codelist_mutex;
+
 #ifdef WIN32
-static void key_down(UINT_PTR WPARAM)
-{
-	switch (WPARAM)
-	{
-	case VK_UP:
-		Input::getInstance()->m_PressButtonList.push_front(Input::Up);
-		break;
-	case VK_DOWN:
-		Input::getInstance()->m_PressButtonList.push_front(Input::Down);
-		break;
-	case VK_LEFT:
-		Input::getInstance()->m_PressButtonList.push_front(Input::Left);
-		break;
-	case VK_RIGHT:
-		Input::getInstance()->m_PressButtonList.push_front(Input::Right);
-		break;
-	}
-}
-
-static void key_up(UINT_PTR WPARAM)
-{
-	switch (WPARAM)
-	{
-	case VK_UP:
-		Input::getInstance()->button_status_map[Input::Up] = Input::Button_State_Up;
-		break;
-	case VK_DOWN:
-		Input::getInstance()->button_status_map[Input::Down] = Input::Button_State_Up;
-		break;
-	case VK_LEFT:
-		Input::getInstance()->button_status_map[Input::Left] = Input::Button_State_Up;
-		break;
-	case VK_RIGHT:
-		Input::getInstance()->button_status_map[Input::Right] = Input::Button_State_Up;
-		break;
-	}
-}
-
 static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 {
+	Input::ButtonListStruct info={Input::None,0};
+	switch (wParam)
+	{
+	case VK_UP:
+		info.code = Input::Up;
+		break;
+	case VK_DOWN:
+		info.code = Input::Down;
+		break;
+	case VK_LEFT:
+		info.code = Input::Left;
+		break;
+	case VK_RIGHT:
+		info.code = Input::Right;
+	case VK_RETURN:
+		info.code = Input::C;
+		break;
+	}
+
 	switch (message)
 	{
 	case WM_KEYDOWN:
-		key_down(wParam);
+		info.isDown = 1;
 		break;
 	case WM_KEYUP:
-		key_up(wParam);
+		info.isDown = 0;
 		break;
 	}
+
+	pthread_mutex_lock(&s_input_codelist_mutex);
+	Input::getInstance()->pushkey(info);
+	pthread_mutex_unlock(&s_input_codelist_mutex);
 }
 #endif
 

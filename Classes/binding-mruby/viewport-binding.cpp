@@ -45,6 +45,11 @@ MRB_METHOD(viewportInitialize)
 	return self;
 }
 
+MRB_METHOD(viewportUpdate)
+{
+	return mrb_nil_value();
+}
+
 #define DISP_CLASS_NAME "viewport"
 
 DEF_PROP_OBJ(Viewport, Rect, Rect, CSrect)
@@ -71,5 +76,7 @@ void viewportBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Viewport, Color, "color" );
 	INIT_PROP_BIND( Viewport, Tone,  "tone"  );
 
+
 	mrb_define_method(mrb, klass, "inspect", inspectObject, MRB_ARGS_NONE());
+	mrb_define_method(mrb, klass, "update", viewportUpdate, MRB_ARGS_NONE());
 }

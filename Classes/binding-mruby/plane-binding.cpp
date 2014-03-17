@@ -29,6 +29,7 @@ DEF_PROP_OBJ(Plane, Tone, Tone, CStone)
 
 DEF_PROP_I(Plane, OX)
 DEF_PROP_I(Plane, OY)
+DEF_PROP_I(Plane, Z)
 DEF_PROP_I(Plane, Opacity)
 DEF_PROP_I(Plane, BlendType)
 
@@ -36,8 +37,7 @@ DEF_PROP_F(Plane, ZoomX)
 DEF_PROP_F(Plane, ZoomY)
 
 
-void
-planeBindingInit(mrb_state *mrb)
+void planeBindingInit(mrb_state *mrb)
 {
 	RClass *klass = mrb_define_class(mrb, "Plane", mrb_class_get(mrb,"Object"));
 
@@ -47,6 +47,7 @@ planeBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Plane, Bitmap,    "bitmap"     );
 	INIT_PROP_BIND( Plane, OX,        "ox"         );
 	INIT_PROP_BIND( Plane, OY,        "oy"         );
+	INIT_PROP_BIND( Plane, Z,        "z"         );
 	INIT_PROP_BIND( Plane, ZoomX,     "zoom_x"     );
 	INIT_PROP_BIND( Plane, ZoomY,     "zoom_y"     );
 	INIT_PROP_BIND( Plane, Opacity,   "opacity"    );

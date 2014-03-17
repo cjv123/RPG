@@ -31,6 +31,7 @@ extern void audioBindingInit(mrb_state* mrb);
 extern void timeBindingInit(mrb_state* mrb);
 extern void fileBindingInit(mrb_state* mrb);
 extern void inputBindingInit(mrb_state* mrb);
+extern void planeBindingInit(mrb_state *mrb);
 
 
 static const char * mrbValueString(mrb_value value)
@@ -78,6 +79,7 @@ void RubyEngine::initBindingMethod()
 	timeBindingInit(m_mrb);
 	fileBindingInit(m_mrb);
 	inputBindingInit(m_mrb);
+	planeBindingInit(m_mrb);
 
 	mrb_load_irep(m_mrb, mrbModuleRPG);
 	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());

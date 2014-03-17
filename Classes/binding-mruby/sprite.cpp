@@ -95,7 +95,7 @@ struct SpritePrivate
 	}
 };
 
-Sprite::Sprite(Viewport *viewport)
+Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0)
 {
 	p = new SpritePrivate;
 	if (NULL != viewport)
@@ -189,7 +189,7 @@ void Sprite::setSrcRect(Rect *rect)
 
 struct SetPropStruct
 {
-	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible};
+	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible,opacity};
 	SetPropStruct::type prop_type;
 	int value;
 };
@@ -199,9 +199,10 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
-	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
-	if (NULL != emubitmap)
+	
+	if (sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
 	{
+		CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
 		switch (propstruct->prop_type)
 		{
 		case SetPropStruct::x:
@@ -230,6 +231,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 			break;
 		case SetPropStruct::visible:
 			emubitmap->setVisible(value);
+			break;
+		case SetPropStruct::opacity:
+			emubitmap->setOpacity(value);
 			break;
 		}
 	}
@@ -391,7 +395,10 @@ int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 
 void Sprite::setOpacity(int value)
 {
-	ThreadHandler hander={handler_method_set_opacity,(int)this,(void*)value};
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::opacity;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	p->opacity = value;
@@ -488,6 +495,8 @@ void Sprite::update()
 	{
 		Flash_ptr_struct* ptr2 = new Flash_ptr_struct;
 		ptr2->color = m_flashColor;
+		if (m_flashColor==NULL)
+			ptr2->color = &p->tmp.color;
 		ptr2->duration = m_flashDuration;
 		ThreadHandler hander={handler_method_flash,(int)this,(void*)ptr2};
 		pthread_mutex_lock(&s_thread_handler_mutex);
@@ -503,7 +512,7 @@ int Sprite::handler_method_composite( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Viewport* viewport = sprite->p->viewport;
 
-	if (viewport)
+	if (viewport && sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
 	{
 		CCSprite* pSprite = sprite->p->bitmap->getEmuBitmap();
 		pSprite->setPosition(ccp(viewport->getRect()->x,rgss_y_to_cocos_y(viewport->getRect()->y,SceneMain::getMainLayer()->getContentSize().height)));

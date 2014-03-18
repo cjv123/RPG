@@ -66,7 +66,6 @@ Plane::~Plane()
 
 void Plane::setBitmap(Bitmap *value)
 {
-	GUARD_DISPOSED;
 
 	p->bitmap = value;
 

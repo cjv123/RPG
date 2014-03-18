@@ -23,6 +23,7 @@ static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 		break;
 	case VK_RIGHT:
 		info.code = Input::Right;
+		break;
 	case VK_RETURN:
 		info.code = Input::C;
 		break;

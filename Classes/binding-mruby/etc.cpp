@@ -272,6 +272,8 @@ void Rect::set(int x, int y, int w, int h)
 	this->y = y;
 	width = w;
 	height = h;
+
+	onChange();
 }
 
 void Rect::empty()
@@ -348,4 +350,22 @@ Rect *Rect::deserialize(const char *data, int len)
 	r->height = read_int32(data, i);
 
 	return r;
+}
+
+void Rect::addDelegate( Delegate* delegate )
+{
+	m_delegates.push_back(delegate);
+}
+
+void Rect::onChange()
+{
+	for (int i=0;i<m_delegates.size();i++)
+	{
+		m_delegates[i]->onRectChange();
+	}
+}
+
+Rect::~Rect()
+{
+	m_delegates.clear();
 }

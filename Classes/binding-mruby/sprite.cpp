@@ -19,6 +19,7 @@ struct SpritePrivate
 	Viewport* viewport;
 
 	Rect *srcRect;
+	Rect lastRect;
 
 	bool mirrored;
 	int bushDepth;
@@ -95,9 +96,11 @@ struct SpritePrivate
 	}
 };
 
-Sprite::Sprite(Viewport *viewport)
+Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0)
 {
 	p = new SpritePrivate;
+	p->lastRect = *p->srcRect;
+	p->srcRect->addDelegate(this);
 	if (NULL != viewport)
 		setViewport(viewport);
 }
@@ -146,8 +149,8 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	{
 		handler_method_composite((int)sprite,(void*)NULL);
 	}
-
-	SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
+	else
+		SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
 	return 0;
 }
 
@@ -168,6 +171,8 @@ int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 	if (NULL != emuBitmap)
 	{
 		Rect* rect = (Rect*)ptr2;
+		if (rect->getWidth()==0 || rect->getHeight()==0)
+			return -1;
 		CCRect texturerect = CCRectMake(rect->getX(),
 			rect->getY(),
 			rect->getWidth(),rect->getHeight());
@@ -183,13 +188,15 @@ void Sprite::setSrcRect(Rect *rect)
 	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)rect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->srcRect = rect;
+	p->lastRect = *rect;
+	rect->addDelegate(this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 struct SetPropStruct
 {
-	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible};
+	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible,opacity};
 	SetPropStruct::type prop_type;
 	int value;
 };
@@ -199,16 +206,20 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
-	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
-	if (NULL != emubitmap)
+	
+	if (sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
 	{
+		CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
 		switch (propstruct->prop_type)
 		{
 		case SetPropStruct::x:
 			emubitmap->setPositionX(value);
 			break;
 		case SetPropStruct::y:
-			emubitmap->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
+			if (sprite->p->viewport)
+				emubitmap->setPositionY(rgss_y_to_cocos_y(value,sprite->p->viewport->getRect()->height));
+			else
+				emubitmap->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
 			break;
 		case SetPropStruct::z:
 			emubitmap->setZOrder(value);
@@ -230,6 +241,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 			break;
 		case SetPropStruct::visible:
 			emubitmap->setVisible(value);
+			break;
+		case SetPropStruct::opacity:
+			emubitmap->setOpacity(value);
 			break;
 		}
 	}
@@ -391,7 +405,10 @@ int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 
 void Sprite::setOpacity(int value)
 {
-	ThreadHandler hander={handler_method_set_opacity,(int)this,(void*)value};
+	SetPropStruct* ptr2 = new SetPropStruct;
+	ptr2->prop_type = SetPropStruct::opacity;
+	ptr2->value = value;
+	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	p->opacity = value;
@@ -401,7 +418,6 @@ void Sprite::setOpacity(int value)
 
 void Sprite::setViewport(Viewport* value)
 {
-	value->addDelegate(this);
 	p->viewport = value;
 }
 
@@ -488,6 +504,8 @@ void Sprite::update()
 	{
 		Flash_ptr_struct* ptr2 = new Flash_ptr_struct;
 		ptr2->color = m_flashColor;
+		if (m_flashColor==NULL)
+			ptr2->color = &p->tmp.color;
 		ptr2->duration = m_flashDuration;
 		ThreadHandler hander={handler_method_flash,(int)this,(void*)ptr2};
 		pthread_mutex_lock(&s_thread_handler_mutex);
@@ -503,27 +521,24 @@ int Sprite::handler_method_composite( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Viewport* viewport = sprite->p->viewport;
 
-	if (viewport)
+	if (viewport && viewport->getClippingNode() && sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
 	{
 		CCSprite* pSprite = sprite->p->bitmap->getEmuBitmap();
-		pSprite->setPosition(ccp(viewport->getRect()->x,rgss_y_to_cocos_y(viewport->getRect()->y,SceneMain::getMainLayer()->getContentSize().height)));
-
-		Rect rect(viewport->getOX(),viewport->getOY(),viewport->getRect()->width,viewport->getRect()->height);
-
-		Rect* prect= &rect;
-		handler_method_set_srcrect((int)sprite,(void*)(prect));
+		if(!pSprite->getParent())
+			viewport->getClippingNode()->addChild(pSprite);
+		pSprite->setPosition(ccp(sprite->p->x,rgss_y_to_cocos_y(sprite->p->y,viewport->getRect()->height)));
 	}
 
 	return 0;
 }
 
-
-void Sprite::composite()
+void Sprite::onRectChange()
 {
-	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
+	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)p->srcRect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+	p->lastRect = *p->srcRect;
 }
 
 

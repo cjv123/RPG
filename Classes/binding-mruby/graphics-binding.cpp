@@ -33,7 +33,7 @@ MRB_FUNCTION(graphicsFrameReset)
 	return mrb_nil_value();
 }
 
-static int g_frame_rate;
+static int g_frame_rate=60;
 static int g_frame_count;
 static int g_fullscreen;
 static int g_showcurrsor;

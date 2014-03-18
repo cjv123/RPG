@@ -39,16 +39,18 @@ MRB_FUNCTION(inputRepeat)
 
 MRB_FUNCTION(inputDir4)
 {
-	MRB_FUN_UNUSED_PARAM;
+	MRB_FUN_UNUSED_PARAM
+	mrb_int ret =Input::getInstance()->dir4Value();
 
-	return mrb_nil_value();
+	return mrb_fixnum_value(ret);
 }
 
 MRB_FUNCTION(inputDir8)
 {
-	MRB_FUN_UNUSED_PARAM;
+	MRB_FUN_UNUSED_PARAM
+	mrb_int ret =Input::getInstance()->dir8Value();
 
-	return mrb_nil_value();
+	return mrb_fixnum_value(ret);
 }
 
 /* Non-standard extensions */

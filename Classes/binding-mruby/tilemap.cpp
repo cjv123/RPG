@@ -235,7 +235,6 @@ Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
 	{
 		viewport = new Viewport(0,0,0,0);
 	}
-	viewport->addDelegate(this);
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
 	p->tilemap = this;
@@ -277,7 +276,6 @@ void Tilemap::setViewport(Viewport *value)
 		return;
 
 	p->viewport = value;
-	p->viewport->addDelegate(this);
 
 }
 
@@ -403,29 +401,16 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	CCLayer** mapLayer = tilemap->m_mapLayer;
 	Viewport* viewport = tilemap->p->viewport;
 
-	if (NULL!=tilemap->m_clippingNode)
-		tilemap->m_clippingNode->removeFromParentAndCleanup(true);
-	CCClippingNode* clipper = CCClippingNode::create(); 
-	tilemap->m_clippingNode = clipper;
-	CCLayerColor* maskLayer = CCLayerColor::create(ccc4(255,255,255,255));
-	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
-		maskLayer->setContentSize(CCSizeMake(SceneMain::getMainLayer()->getContentSize().width,SceneMain::getMainLayer()->getContentSize().height));
-	else
-		maskLayer->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
-	clipper->setStencil(maskLayer);
-	SceneMain::getMainLayer()->addChild(clipper);
-	
-	maskLayer->setPosition(ccp(viewport->getOX(),
-		rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
-	
-	clipper->setPosition(ccp(-maskLayer->getPositionX()+viewport->getRect()->getX(),
-		-maskLayer->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
+	CCClippingNode* clipper = viewport->getClippingNode();
+	if (!clipper)
+		return -1;
 
 	for (int i=0;i<3;i++)
 	{
 		mapLayer[i] = CCLayer::create();
 		mapLayer[i]->setContentSize(CCSizeMake(mapWidth*tileW,mapHeight*tileW));
 		clipper->addChild(mapLayer[i]);
+		mapLayer[i]->setPosition(ccp(0,rgss_y_to_cocos_y(0,clipper->getContentSize().height)-mapLayer[i]->getContentSize().height));
 	}
 
 	for (int x = 0; x < mapWidth; ++x)
@@ -500,21 +485,9 @@ int Tilemap::handler_method_composite( int ptr1,void* ptr2 )
 	Viewport* viewport = tilemap->p->viewport;
 	int mapWidth = tilemap->p->mapWidth;
 	int mapHeight = tilemap->p->mapHeight;
-	if (viewport)
+	if (viewport && viewport->getClippingNode())
 	{
-		CCClippingNode* clipper = tilemap->m_clippingNode;
-		CCLayerColor* maskLayer = (CCLayerColor*)clipper->getStencil();
-		if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
-			maskLayer->setContentSize(CCSizeMake(SceneMain::getMainLayer()->getContentSize().width,SceneMain::getMainLayer()->getContentSize().height));
-		else
-			maskLayer->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
-
-
-		maskLayer->setPosition(ccp(viewport->getOX(),
-			rgss_y_to_cocos_y(viewport->getOY(),mapHeight*tileW)-maskLayer->getContentSize().height));
-
-		clipper->setPosition(ccp(-maskLayer->getPositionX()+viewport->getRect()->getX(),
-			-maskLayer->getPositionY()+rgss_y_to_cocos_y(viewport->getRect()->getY(),SceneMain::getMainLayer()->getContentSize().height) - maskLayer->getContentSize().height));
+		CCClippingNode* clipper = viewport->getClippingNode();
 
 	}
 

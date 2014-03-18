@@ -65,13 +65,44 @@ struct ViewportPrivate
 	}
 };
 
-Viewport::Viewport(int x, int y, int width, int height) 
+
+int Viewport::handler_method_create( int prt1,void* ptr2 )
 {
-	initViewport(x,y,width,height);
+	Viewport* viewport = (Viewport*)prt1;
+	CCClippingNode* clipper = CCClippingNode::create(); 
+	viewport->m_clippingNode = clipper;
 	
+	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
+		clipper->setContentSize(SceneMain::getMainLayer()->getContentSize());
+	else
+		clipper->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
+	CCLayerColor* maskLayer = CCLayerColor::create(ccc4(255,255,255,255));
+	clipper->setStencil(maskLayer);
+	maskLayer->setContentSize(CCSizeMake(viewport->getRect()->width,viewport->getRect()->height));
+	maskLayer->setPosition(ccp(viewport->getOX(),
+		rgss_y_to_cocos_y(viewport->getOY(),clipper->getContentSize().height)-maskLayer->getContentSize().height));
+
+	SceneMain::getMainLayer()->addChild(clipper);
+
+	clipper->setPosition(ccp(viewport->getRect()->getX() - viewport->getOX(),
+		rgss_y_to_cocos_y(viewport->getRect()->getY() - viewport->getOY(),SceneMain::getMainLayer()->getContentSize().height)-clipper->getContentSize().height ));
+
+	return 0;
 }
 
-Viewport::Viewport(Rect *rect)
+
+extern pthread_mutex_t s_thread_handler_mutex;
+
+Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0)
+{
+	initViewport(x,y,width,height);
+	ThreadHandler hander={handler_method_create,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+}
+
+Viewport::Viewport(Rect *rect) :m_clippingNode(0)
 {
 	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
@@ -79,7 +110,7 @@ Viewport::Viewport(Rect *rect)
 void Viewport::initViewport(int x, int y, int width, int height)
 {
 	p = new ViewportPrivate(x,y,width,height,this);
-	composite();
+	//composite();
 }
 
 Viewport::~Viewport()
@@ -127,27 +158,29 @@ void Viewport::setRect(Rect *value)
 int Viewport::handler_method_composite( int ptr1,void* ptr2 )
 {
 	Viewport* viewport = (Viewport*)ptr1;
-	
-	
+	CCClippingNode* clipper = viewport->m_clippingNode;
+
+	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
+		clipper->setContentSize(SceneMain::getMainLayer()->getContentSize());
+	else
+		clipper->setContentSize(CCSizeMake(viewport->getRect()->getWidth(),viewport->getRect()->getHeight()));
+	CCLayerColor* maskLayer = (CCLayerColor*)clipper->getStencil();
+	maskLayer->setContentSize(CCSizeMake(viewport->getRect()->width,viewport->getRect()->height));
+	maskLayer->setPosition(ccp(viewport->getOX(),
+		rgss_y_to_cocos_y(viewport->getOY(),clipper->getContentSize().height)-maskLayer->getContentSize().height));
+
+	clipper->setPosition(ccp(viewport->getRect()->getX() - viewport->getOX(),
+		rgss_y_to_cocos_y(viewport->getRect()->getY() - viewport->getOY(),SceneMain::getMainLayer()->getContentSize().height)-clipper->getContentSize().height ));
 
 	return 0;
 }
 
-
-extern pthread_mutex_t s_thread_handler_mutex;
 void Viewport::composite()
 {
-// 	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
-// 	pthread_mutex_lock(&s_thread_handler_mutex);
-// 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-// 	pthread_mutex_unlock(&s_thread_handler_mutex);
-	if (m_viewPortDelegates.size()>0)
-	{
-		for (int i=0;i<m_viewPortDelegates.size();i++)
-		{
-			m_viewPortDelegates[i]->composite();
-		}
-	}
+	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 
@@ -160,7 +193,7 @@ void Viewport::draw()
 void Viewport::releaseResources()
 {
 	delete p;
-	
+	m_clippingNode->removeFromParentAndCleanup(true);
 }
 
 
@@ -168,4 +201,9 @@ void Viewport::releaseResources()
 void Viewport::addDelegate( ViewPortDelegate* delegate )
 {
 	m_viewPortDelegates.push_back(delegate);
+}
+
+CCClippingNode* Viewport::getClippingNode()
+{
+	return m_clippingNode;
 }

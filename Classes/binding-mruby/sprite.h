@@ -14,7 +14,7 @@ struct Rect;
 
 struct SpritePrivate;
 
-class Sprite : public Disposable,public ViewPortDelegate
+class Sprite : public Disposable,public Rect::Delegate
 {
 public:
 	Sprite(Viewport *viewport = 0);
@@ -62,7 +62,7 @@ private:
 
 	static int handler_method_set_bitmap(int ptr1,void* prt2);
 
-	virtual void composite();
+	virtual void onRectChange();
 
 	Color* m_flashColor;
 	int m_flashDuration;

@@ -9,9 +9,9 @@ struct BitmapPrivate
 {
 	Font *font;
 
-	BitmapPrivate() : font(0)
+	BitmapPrivate()
 	{
-
+		font = new Font();
 	}
 
 	~BitmapPrivate()
@@ -20,23 +20,17 @@ struct BitmapPrivate
 	}
 };
 
-int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
+int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* image)
 {
 	Bitmap* bitmap = (Bitmap*)bitmap_instance;
 	CCSprite* sp = NULL;
-	string* path = (string*)filename;
-	if (path)
+	CCImage* ccimage = (CCImage*)image;
+	if (image)
 	{
-		string filename_c=*path;
-		if (path->find(".png") == string::npos)
-			filename_c=*path + ".png";
+		CCTexture2D* texture = new CCTexture2D;
+		texture->initWithImage(ccimage);
+		sp = CCSprite::createWithTexture(texture);
 		
-		sp = CCSprite::create(filename_c.c_str());
-		if (!sp)
-		{
-			filename_c = *path + ".jpg";
-			sp = CCSprite::create(filename_c.c_str());
-		}
 		CCAssert(sp,"fuck! image file error!");
 
 		bitmap->m_width = sp->getContentSize().width;
@@ -50,7 +44,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* filename)
 	sp->getTexture()->setAliasTexParameters();
 	bitmap->m_emuBitmap = sp;
 	sp->retain();
-	delete path;
+	delete ccimage;
 	return 0;
 }
 
@@ -58,12 +52,29 @@ extern pthread_mutex_t s_thread_handler_mutex;
 Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL)
 {
 	string* path = new string(filename);
-	
-	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)path};
-	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
-	m_filename = filename;
+
+	CCImage* image = new CCImage;
+	string filename_c=*path;
+	if (path->find(".png") == string::npos)
+		filename_c=*path + ".png";
+	bool ret =image->initWithImageFile(filename_c.c_str());
+	if (!ret)
+	{
+		filename_c = *path + ".jpg";
+		ret = image->initWithImageFile(filename_c.c_str(),CCImage::kFmtJpg);
+	}
+
+	if (ret)
+	{
+		m_width = image->getWidth();
+		m_height = image->getHeight();
+		ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)image};
+		pthread_mutex_lock(&s_thread_handler_mutex);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		pthread_mutex_unlock(&s_thread_handler_mutex);
+		m_filename = filename;
+	}
+
 
 	p = new BitmapPrivate;
 }
@@ -99,7 +110,8 @@ int Bitmap::width() const
 	{
 		return m_emuBitmap->getContentSize().width;
 	}
-	return 0;
+	
+	return m_width;
 }
 
 int Bitmap::height() const
@@ -109,7 +121,7 @@ int Bitmap::height() const
 		return m_emuBitmap->getContentSize().height;
 	}
 
-	return 0;
+	return m_height;
 }
 
 IntRect Bitmap::rect() const
@@ -394,7 +406,12 @@ static uint16_t utf8_to_ucs2(const char *_input,
 	return -1;
 }
 
-DEF_ATTR_SIMPLE(Bitmap, Font, Font*, p->font)
+DEF_ATTR_RD_SIMPLE(Bitmap, Font, Font*, p->font)
+
+void Bitmap::setFont(Font* value)
+{
+
+}
 
 IntRect Bitmap::textSize(const char *str)
 {

@@ -14,7 +14,7 @@ class Table;
 
 struct TilemapPrivate;
 
-class Tilemap : public Disposable,public ViewPortDelegate
+class Tilemap : public Disposable
 {
 public:
 	class Autotiles

@@ -37,6 +37,7 @@ DEF_PROP_OBJ(Window, Rect, CursorRect, CScursor_rect)
 DEF_PROP_B(Window, Stretch)
 DEF_PROP_B(Window, Active)
 DEF_PROP_B(Window, Pause)
+DEF_PROP_B(Window, Visible)
 
 DEF_PROP_I(Window, X)
 DEF_PROP_I(Window, Y)
@@ -75,6 +76,7 @@ void windowBindingInit(mrb_state *mrb)
 	INIT_PROP_BIND( Window, BackOpacity,     "back_opacity"     );
 	INIT_PROP_BIND( Window, ContentsOpacity, "contents_opacity" );
 	INIT_PROP_BIND( Window, Z, "z" );
+	INIT_PROP_BIND( Window, Visible ,"visible");
 
 	mrb_define_method(mrb, klass, "inspect", inspectObject, MRB_ARGS_NONE());
 }

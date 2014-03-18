@@ -25,7 +25,8 @@
 #include "serializable.h"
 #include "etc-internal.h"
 
-struct SDL_Color;
+#include <vector>
+using namespace std;
 
 enum BlendType
 {
@@ -140,7 +141,7 @@ struct Rect : public Serializable
 	    : x(0), y(0), width(0), height(0)
 	{}
 
-	virtual ~Rect() {}
+	virtual ~Rect();
 
 	Rect(int x, int y, int width, int height);
 	Rect(const Rect &o);
@@ -149,6 +150,14 @@ struct Rect : public Serializable
 	bool operator==(const Rect &o) const;
 	void operator=(const IntRect &rect);
 	void set(int x, int y, int w, int h);
+
+	class Delegate 
+	{
+	public:
+		virtual void onRectChange()=0;
+	};
+
+	void addDelegate(Delegate* delegate);
 
 	FloatRect toFloatRect() const
 	{
@@ -181,6 +190,9 @@ struct Rect : public Serializable
 	int y;
 	int width;
 	int height;
+private:
+	void onChange();
+	vector<Delegate*> m_delegates;
 };
 
 /* For internal use.

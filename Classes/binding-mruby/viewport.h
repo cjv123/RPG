@@ -32,6 +32,7 @@ public:
 	DECL_ATTR( Tone,  Tone*  )
 
 	void addDelegate(ViewPortDelegate* delegate);
+	CCClippingNode* getClippingNode();
 private:
 	void initViewport(int x, int y, int width, int height);
 	void geometryChanged();
@@ -42,11 +43,13 @@ private:
 
 	void releaseResources();
 
+	static int handler_method_create(int prt1,void* ptr2);
 	static int handler_method_composite(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
 	friend struct ViewportPrivate;
 	std::vector<ViewPortDelegate*> m_viewPortDelegates;
+	CCClippingNode* m_clippingNode;
 };
 
 #endif // VIEWPORT_H

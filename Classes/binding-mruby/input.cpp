@@ -127,3 +127,45 @@ void Input::popkey( ButtonListStruct code )
 {
 	m_buttonCodeList.pop_back();
 }
+
+int Input::dir4Value()
+{
+	if (m_buttonStateMap[Up]==Button_State_Down || m_buttonStateMap[Up]==Button_State_Just_Down)
+	{
+		return 8;
+	}
+	else if (m_buttonStateMap[Down]==Button_State_Down || m_buttonStateMap[Down]==Button_State_Just_Down)
+	{
+		return 2;
+	}
+	else if (m_buttonStateMap[Left]==Button_State_Down || m_buttonStateMap[Left]==Button_State_Just_Down)
+	{
+		return 4;
+	}
+	else if (m_buttonStateMap[Right]==Button_State_Down || m_buttonStateMap[Right]==Button_State_Just_Down)
+	{
+		return 6;
+	}
+	return 0;
+}
+
+int Input::dir8Value()
+{
+	if (m_buttonStateMap[Up]==Button_State_Down || m_buttonStateMap[Up]==Button_State_Just_Down)
+	{
+		return 8;
+	}
+	else if (m_buttonStateMap[Down]==Button_State_Down || m_buttonStateMap[Down]==Button_State_Just_Down)
+	{
+		return 2;
+	}
+	else if (m_buttonStateMap[Left]==Button_State_Down || m_buttonStateMap[Left]==Button_State_Just_Down)
+	{
+		return 4;
+	}
+	else if (m_buttonStateMap[Right]==Button_State_Down || m_buttonStateMap[Right]==Button_State_Just_Down)
+	{
+		return 6;
+	}
+	return 0;
+}

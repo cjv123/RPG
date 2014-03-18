@@ -36,6 +36,7 @@ static const int atAreaH = autotileH * autotileCount;
 
 static const int tsLaneW = tilesetW / 2;
 
+
 enum Position
 {
 	Normal = 1 << 0,
@@ -238,8 +239,7 @@ Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
 	p->tilemap = this;
-	for (int i=0;i<3;i++)
-		m_mapLayer[i] = NULL;
+
 }
 
 Tilemap::~Tilemap()
@@ -309,19 +309,49 @@ void Tilemap::setVisible(bool value)
 	p->visible = value;
 }
 
+
+int Tilemap::handler_method_setoxy( int ptr1,void* ptr2 )
+{
+	Tilemap* tilemap = (Tilemap*)ptr1;
+	Vec2i* pos = (Vec2i*)ptr2;
+	CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
+	int clipperH = clipper->getContentSize().height;
+	for (int i=0;i<tilemap->m_tiles.size();i++)
+	{
+		Tile tile = tilemap->m_tiles[i];
+		CCSprite* tilesp = tile.sp;
+		tilesp->setPositionX(tile.pos.x-pos->x);
+		tilesp->setPositionY( rgss_y_to_cocos_y(tile.pos.y-pos->y,clipperH));
+	}
+	delete pos;
+	return 0;
+}
+
+
 void Tilemap::setOX(int value)
 {
+	if (value == p->offset.x)
+		return;
+	
+	pthread_mutex_lock(&s_thread_handler_mutex);
 	p->offset.x = value;
-	p->viewport->setOX(value);
+	ThreadHandler hander={handler_method_setoxy,(int)this,new Vec2i(p->offset.x,p->offset.y)};
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Tilemap::setOY(int value)
 {
+	if (value == p->offset.y)
+		return;
+	
+	pthread_mutex_lock(&s_thread_handler_mutex);
 	p->offset.y = value;
-	p->viewport->setOY(value);	
+	ThreadHandler hander={handler_method_setoxy,(int)this,new Vec2i(p->offset.x,p->offset.y)};
+	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+
 }
-
-
 
 
 void Tilemap::releaseResources()
@@ -347,7 +377,6 @@ static FloatRect getAutotilePieceRect(int x, int y, /* in pixel coords */
 
 void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 {
-	CCLayer** mapLayer = tilemap->m_mapLayer;
 	/* Which autotile [0-7] */
 	int atInd = tileInd / 48 - 1;
 	/* Which tile pattern of the autotile [0-47] */
@@ -367,10 +396,14 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 		//texRect.y += atInd * autotileH;
 		texRect.x -=0.5;texRect.y-=0.5;texRect.w+=1;texRect.h+=1;
 
+		CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
+
 		CCSprite* tilesp = CCSprite::createWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
-		mapLayer[z]->addChild(tilesp);
+		clipper->addChild(tilesp);
 		tilesp->setAnchorPoint(ccp(0,1));
-		tilesp->setPosition(ccp(posRect.x,rgss_y_to_cocos_y(posRect.y,mapLayer[z]->getContentSize().height)));
+		tilesp->setPosition(ccp(posRect.x,rgss_y_to_cocos_y(posRect.y,clipper->getContentSize().height)));
+		Tile tile = {Vec2i(posRect.x,posRect.y),tilesp};
+		tilemap->m_tiles.push_back(tile);
 
 		/*is a animte tile*/
 		if (autoTilsetSp->getContentSize().width>autotileW)
@@ -398,20 +431,11 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	int mapWidth = tilemap->p->mapWidth;
 	int mapHeight = tilemap->p->mapHeight;
 	int mapDepth = mapData->zSize();
-	CCLayer** mapLayer = tilemap->m_mapLayer;
 	Viewport* viewport = tilemap->p->viewport;
 
 	CCClippingNode* clipper = viewport->getClippingNode();
 	if (!clipper)
 		return -1;
-
-	for (int i=0;i<3;i++)
-	{
-		mapLayer[i] = CCLayer::create();
-		mapLayer[i]->setContentSize(CCSizeMake(mapWidth*tileW,mapHeight*tileW));
-		clipper->addChild(mapLayer[i]);
-		mapLayer[i]->setPosition(ccp(0,rgss_y_to_cocos_y(0,clipper->getContentSize().height)-mapLayer[i]->getContentSize().height));
-	}
 
 	for (int x = 0; x < mapWidth; ++x)
 	{	
@@ -443,10 +467,11 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 				int tileY = tsInd / 8;
 
 				CCSprite* tilesp = CCSprite::createWithTexture(tilesetSp->getTexture(),CCRectMake(tileX*tileW,tileY*tileW,tileW,tileW));
-				mapLayer[z]->addChild(tilesp);
+				clipper->addChild(tilesp);
 				tilesp->setAnchorPoint(ccp(0,1));
-				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,mapLayer[z]->getContentSize().height)));
-
+				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,clipper->getContentSize().height)));
+				Tile tile = {Vec2i(x*tileW,y*tileW),tilesp};
+				tilemap->m_tiles.push_back(tile);
 				int zoder = 0;
 				if (prio == 1)
 					zoder = 64;
@@ -487,7 +512,7 @@ int Tilemap::handler_method_composite( int ptr1,void* ptr2 )
 	int mapHeight = tilemap->p->mapHeight;
 	if (viewport && viewport->getClippingNode())
 	{
-		CCClippingNode* clipper = viewport->getClippingNode();
+		//CCClippingNode* clipper = viewport->getClippingNode();
 
 	}
 

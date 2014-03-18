@@ -26,19 +26,21 @@ void Input::update()
 	}
 
 	pthread_mutex_lock(&s_input_codelist_mutex);
-	list<ButtonListStruct>::iterator it = m_buttonCodeList.begin();
-	for (;it!=m_buttonCodeList.end();it++)
+	if (m_buttonCodeList.size()>0)
 	{
-		if (it->isDown)
+		ButtonListStruct code = m_buttonCodeList.back();
+		if (code.isDown)
 		{
-			m_buttonStateMap[it->code] = Button_State_Just_Down;
+			m_buttonStateMap[code.code] = Button_State_Just_Down;
+			//printf("button down:%d\n",(int)it->code);
 		}
 		else
 		{
-			m_buttonStateMap[it->code] = Button_State_Up;
+			m_buttonStateMap[code.code] = Button_State_Up;
+			//printf("button up:%d\n",(int)it->code);
 		}
+		m_buttonCodeList.pop_back();
 	}
-	m_buttonCodeList.clear();
 	pthread_mutex_unlock(&s_input_codelist_mutex);
 }
 

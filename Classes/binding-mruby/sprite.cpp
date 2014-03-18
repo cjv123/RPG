@@ -177,6 +177,9 @@ int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 			rect->getY(),
 			rect->getWidth(),rect->getHeight());
 		emuBitmap->setTextureRect(texturerect);
+		emuBitmap->setAnchorPoint(ccp(sprite->p->ox/emuBitmap->getContentSize().width,
+			1-sprite->p->oy/emuBitmap->getContentSize().height));
+
 	}
 	return 0;
 }
@@ -537,8 +540,9 @@ void Sprite::onRectChange()
 	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)p->srcRect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander);
-	pthread_mutex_unlock(&s_thread_handler_mutex);
 	p->lastRect = *p->srcRect;
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	
 }
 
 

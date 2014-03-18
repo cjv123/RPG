@@ -47,10 +47,17 @@ public:
 
 private:
 	TilemapPrivate *p;
-	CCLayer* m_mapLayer[3];
 	CCClippingNode* m_clippingNode;
 
+	struct Tile
+	{
+		Vec2i pos;
+		CCSprite* sp;
+	};
+	vector<Tile> m_tiles;
+
 	static int handler_method_drawMap(int prt1,void* ptr2);
+	static int handler_method_setoxy(int ptr1,void* ptr2);
 	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd);
 	static int Tilemap::handler_method_composite( int ptr1,void* ptr2 );
 	void drawMap();

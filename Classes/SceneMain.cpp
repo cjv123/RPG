@@ -27,6 +27,9 @@ static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 	case VK_RETURN:
 		info.code = Input::C;
 		break;
+	case VK_ESCAPE:
+		info.code = Input::B;
+		break;
 	}
 
 	switch (message)

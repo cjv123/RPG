@@ -6,10 +6,25 @@ ThreadHandlerMananger* ThreadHandlerMananger::getInstance()
 	return &instance;
 }
 
-void ThreadHandlerMananger::pushHandler( ThreadHandler& handler )
+void ThreadHandlerMananger::pushHandler( ThreadHandler& handler ,void* instance)
 {
+	handler.instance = (int)instance;
 	m_HandlerList.push_back(handler);
 }
+
+void ThreadHandlerMananger::deleteHandler( int instance )
+{
+	list<ThreadHandler>::iterator it = m_HandlerList.begin();
+	for(;it!=m_HandlerList.end();it++)
+	{
+		if (it->instance == instance)
+		{
+			m_HandlerList.erase(it);
+			return;
+		}
+	}
+}
+
 
 void ThreadHandlerMananger::update( float delay )
 {
@@ -29,4 +44,5 @@ ThreadHandlerMananger::ThreadHandlerMananger()
 {
 	
 }
+
 

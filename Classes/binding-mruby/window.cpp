@@ -164,7 +164,7 @@ Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0),m_
 
 	ThreadHandler hander={handler_method_create_winnode,(int)this,(void*)0};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -179,7 +179,7 @@ void Window::update()
 	{
 		ThreadHandler hander={handler_method_set_cursor_rect,(int)this,(void*)p->cursorRect};
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 		p->lastRect = *p->cursorRect;
 	}
@@ -239,7 +239,7 @@ void Window::setContents(Bitmap *value)
 
 	ThreadHandler hander={handler_method_set_content,(int)this,(void*)0};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 	p->contents = value;
@@ -301,7 +301,7 @@ void Window::setX(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -313,7 +313,7 @@ void Window::setY(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -372,7 +372,7 @@ void Window::setCursorRect(Rect *value)
 	p->lastRect = *value;
 	ThreadHandler hander={handler_method_set_cursor_rect,(int)this,(void*)value};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -437,7 +437,7 @@ void Window::setOpacity(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -452,7 +452,7 @@ void Window::setBackOpacity(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -467,7 +467,7 @@ void Window::setContentsOpacity(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -485,7 +485,7 @@ void Window::setZ(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -497,14 +497,31 @@ void Window::setVisible(bool value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
+
+int Window::handler_method_release( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+	if (window->m_winNode)
+	{
+		window->m_winNode->removeFromParentAndCleanup(true);
+		window->m_winNode = NULL;
+	}
+	return 0;
+}
+
+
 void Window::releaseResources()
 {
-	m_winNode->removeAllChildrenWithCleanup(true);
-	delete p;
+	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+	if (p)
+		delete p;
 }
 
 void Window::composite()
@@ -570,7 +587,7 @@ void Window::drawWindow()
 	{
 		ThreadHandler hander={handler_method_draw_window,(int)this,(void*)0};
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
 }

@@ -114,6 +114,9 @@
     <ClCompile Include="..\Classes\binding-mruby\plane-binding.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\disposable.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">

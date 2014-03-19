@@ -26,7 +26,7 @@
 #include "binding-util.h"
 
 #include <string.h>
-
+#include "../ThreadHandlerManager.h"
 template<class C>
 MRB_METHOD(disposableDispose)
 {

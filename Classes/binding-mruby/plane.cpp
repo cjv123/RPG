@@ -175,8 +175,8 @@ void Plane::aboutToAccess() const
 
 void Plane::releaseResources()
 {
-	
-	delete p;
+	if (p)
+		delete p;
 }
 
 extern pthread_mutex_t s_thread_handler_mutex;
@@ -211,7 +211,7 @@ void Plane::composite()
 {
 	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 

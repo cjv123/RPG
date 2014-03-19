@@ -45,6 +45,7 @@ private:
 
 	static int handler_method_create(int prt1,void* ptr2);
 	static int handler_method_composite(int ptr1,void* ptr2);
+	static int handler_method_release(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
 	friend struct ViewportPrivate;

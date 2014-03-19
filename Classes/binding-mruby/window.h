@@ -54,6 +54,7 @@ private:
 	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_set_cursor_rect(int ptr1,void* ptr2);
 	static int handler_method_set_content(int ptr1,void* ptr2);
+	static int handler_method_release(int ptr1,void* ptr2);
 
 	CCNodeRGBA* m_winNode;
 	CCSprite* m_winsp;

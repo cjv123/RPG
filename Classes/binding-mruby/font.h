@@ -68,6 +68,7 @@ public:
 	DECL_ATTR_STATIC( DefaultColor,  Color*      )
 
 private:
+	static int handler_method_setcolor(int ptr1,void* ptr2);
 	FontPrivate *p;
 };
 

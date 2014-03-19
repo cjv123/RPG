@@ -159,7 +159,7 @@ void Sprite::setBitmap(Bitmap *bitmap)
 {
 	ThreadHandler hander={handler_method_set_bitmap,(int)this,(void*)bitmap};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 }
@@ -190,7 +190,7 @@ void Sprite::setSrcRect(Rect *rect)
 		return;
 	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)rect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->srcRect = rect;
 	p->lastRect = *rect;
 	rect->addDelegate(this);
@@ -207,6 +207,8 @@ struct SetPropStruct
 int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
+	if (sprite->isDisposed())
+		return -1;
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
 	
@@ -262,7 +264,7 @@ void Sprite::setX(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->x = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -275,7 +277,7 @@ void Sprite::setY(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->y = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -283,12 +285,17 @@ void Sprite::setY(int value)
 
 void Sprite::setZ(int value)
 {
+	if (p->z == value)
+	{
+		return;
+	}
+
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::z;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->z = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -301,7 +308,7 @@ void Sprite::setOX(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->ox = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -314,7 +321,7 @@ void Sprite::setOY(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->oy = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -327,7 +334,7 @@ void Sprite::setZoomX(float value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->zx = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -340,7 +347,7 @@ void Sprite::setZoomY(float value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->zy = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -353,7 +360,7 @@ void Sprite::setAngle(float value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->angle = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -366,7 +373,7 @@ void Sprite::setVisible(bool value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->isVisible = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -388,7 +395,7 @@ void Sprite::setMirror(bool mirrored)
 {
 	ThreadHandler hander={handler_method_set_mirror,(int)this,(void*)mirrored};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->mirrored = mirrored;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -413,7 +420,7 @@ void Sprite::setOpacity(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->opacity = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -512,7 +519,7 @@ void Sprite::update()
 		ptr2->duration = m_flashDuration;
 		ThreadHandler hander={handler_method_flash,(int)this,(void*)ptr2};
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 		m_flashDuration = 0;
 	}
@@ -539,7 +546,7 @@ void Sprite::onRectChange()
 {
 	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)p->srcRect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->lastRect = *p->srcRect;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	

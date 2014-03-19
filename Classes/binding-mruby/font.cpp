@@ -5,6 +5,7 @@
 
 #include <string>
 #include <utility>
+#include "ThreadHandlerManager.h"
 
 static void strToLower(std::string &str)
 {
@@ -69,6 +70,17 @@ void Font::setSize(int value)
 
 	p->size = value;
 }
+
+
+extern pthread_mutex_t s_thread_handler_mutex;
+int Font::handler_method_setcolor( int ptr1,void* ptr2 )
+{
+	Font* font = (Font*)ptr1;
+	Color* color = (Color*)ptr2;
+	font->p->color = color;
+	return 0;
+}
+
 
 #undef CHK_DISP
 #define CHK_DISP

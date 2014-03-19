@@ -12,14 +12,7 @@ public:
 
 	virtual ~Disposable() {}
 
-	void dispose()
-	{
-		if (disposed)
-			return;
-
-		releaseResources();
-		disposed = true;
-	}
+	void dispose();
 
 	bool isDisposed() const { return disposed; }
 

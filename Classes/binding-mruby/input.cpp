@@ -106,6 +106,7 @@ Input::Input()
 	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Left,Button_State_None));
 	m_buttonStateMap.insert(Button_State_Map_Type::value_type(Right,Button_State_None));
 	m_buttonStateMap.insert(Button_State_Map_Type::value_type(C,Button_State_None));
+	m_buttonStateMap.insert(Button_State_Map_Type::value_type(B,Button_State_None));
 }
 
 

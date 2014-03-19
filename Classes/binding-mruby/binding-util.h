@@ -400,4 +400,5 @@ inline float rgss_y_to_cocos_y(int y,int h)
 
 MRB_METHOD_PUB(inspectObject);
 
+
 #endif // BINDINGUTIL_H

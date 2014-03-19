@@ -310,7 +310,7 @@ void Tilemap::setVisible(bool value)
 }
 
 
-int Tilemap::handler_method_setoxy( int ptr1,void* ptr2 )
+int Tilemap::handler_method_setox( int ptr1,void* ptr2 )
 {
 	Tilemap* tilemap = (Tilemap*)ptr1;
 	Vec2i* pos = (Vec2i*)ptr2;
@@ -321,11 +321,28 @@ int Tilemap::handler_method_setoxy( int ptr1,void* ptr2 )
 		Tile tile = tilemap->m_tiles[i];
 		CCSprite* tilesp = tile.sp;
 		tilesp->setPositionX(tile.pos.x-pos->x);
-		tilesp->setPositionY( rgss_y_to_cocos_y(tile.pos.y-pos->y,clipperH));
 	}
 	delete pos;
 	return 0;
 }
+
+int Tilemap::handler_method_setoy( int ptr1,void* ptr2 )
+{
+	Tilemap* tilemap = (Tilemap*)ptr1;
+	Vec2i* pos = (Vec2i*)ptr2;
+	CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
+	int clipperH = clipper->getContentSize().height;
+	for (int i=0;i<tilemap->m_tiles.size();i++)
+	{
+		Tile tile = tilemap->m_tiles[i];
+		CCSprite* tilesp = tile.sp;
+		tilesp->setPositionY( rgss_y_to_cocos_y(tile.pos.y-pos->y,clipperH));
+		tilemap->orderTileZ(tilesp,tile.x,tile.y,tile.z);
+	}
+	delete pos;
+	return 0;
+}
+
 
 
 void Tilemap::setOX(int value)
@@ -335,8 +352,8 @@ void Tilemap::setOX(int value)
 	
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	p->offset.x = value;
-	ThreadHandler hander={handler_method_setoxy,(int)this,new Vec2i(p->offset.x,p->offset.y)};
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandler hander={handler_method_setox,(int)this,new Vec2i(p->offset.x,p->offset.y)};
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -347,16 +364,34 @@ void Tilemap::setOY(int value)
 	
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	p->offset.y = value;
-	ThreadHandler hander={handler_method_setoxy,(int)this,new Vec2i(p->offset.x,p->offset.y)};
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandler hander={handler_method_setoy,(int)this,new Vec2i(p->offset.x,p->offset.y)};
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 }
 
 
+int Tilemap::handler_method_release( int ptr1,void* ptr2 )
+{
+	Tilemap* tilemap = (Tilemap*)ptr1;
+
+	for (int i=0;i<tilemap->m_tiles.size();i++)
+	{
+		tilemap->m_tiles[i].sp->removeAllChildrenWithCleanup(true);
+	}
+
+	return 0;
+}
+
 void Tilemap::releaseResources()
 {
-	delete p;
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+
+	if(p)
+		delete p;
 }
 
 
@@ -402,7 +437,7 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 		clipper->addChild(tilesp);
 		tilesp->setAnchorPoint(ccp(0,1));
 		tilesp->setPosition(ccp(posRect.x,rgss_y_to_cocos_y(posRect.y,clipper->getContentSize().height)));
-		Tile tile = {Vec2i(posRect.x,posRect.y),tilesp};
+		Tile tile = {Vec2i(posRect.x,posRect.y),tilesp,x,y,z};
 		tilemap->m_tiles.push_back(tile);
 
 		/*is a animte tile*/
@@ -418,7 +453,9 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 			CCAnimate* animate = CCAnimate::create(animation);
 			tilesp->runAction(CCRepeatForever::create(animate));
 		}
+		tilemap->orderTileZ(tilesp,x,y,z);
 	}
+	
 }
 
 
@@ -470,18 +507,13 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 				clipper->addChild(tilesp);
 				tilesp->setAnchorPoint(ccp(0,1));
 				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,clipper->getContentSize().height)));
-				Tile tile = {Vec2i(x*tileW,y*tileW),tilesp};
+				Tile tile = {Vec2i(x*tileW,y*tileW),tilesp,x,y,z};
 				tilemap->m_tiles.push_back(tile);
-				int zoder = 0;
-				if (prio == 1)
-					zoder = 64;
-				if (prio>1)
-					zoder = 64 + (prio -1)*32;
-				tilesp->setZOrder(zoder);
+				tilemap->orderTileZ(tilesp,x,y,z);
 			}
 		}
 	}
-
+	
 
 	return 0;
 }
@@ -499,7 +531,7 @@ void Tilemap::drawMap()
 	{
 		ThreadHandler hander={handler_method_drawMap,(int)this,(void*)NULL};
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		ThreadHandlerMananger::getInstance()->pushHandler(hander);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
 }
@@ -524,6 +556,31 @@ void Tilemap::composite()
 {
 	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+}
+
+void Tilemap::orderTileZ(CCSprite* tilesp,int x,int y,int z)
+{
+	Table* mapData = p->mapData;
+	int mapWidth = p->mapWidth;
+	int mapHeight = p->mapHeight;
+	int mapDepth = mapData->zSize();
+	
+	int tileInd = mapData->at(x, y, z);
+
+	if (tileInd < 48)
+		return;
+
+	int prio = p->samplePriority(tileInd);
+
+	if (prio == -1)
+		return;
+
+	int zoder = y*tileW - p->offset.y;
+	if (prio == 1)
+		zoder += 64;
+	if (prio>1)
+		zoder += 64 + (prio -1)*32;
+	tilesp->setZOrder(zoder);
 }

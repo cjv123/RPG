@@ -101,6 +101,7 @@ private:
 	static int handler_method_clear(int ptr1,void* ptr2);
 	static int handler_method_fill(int prt1, void* ptr2);
 	static int handler_method_drawtext(int ptr1,void* ptr2);
+	static int handler_method_release(int ptr1,void* ptr2);
 
 	virtual void releaseResources();
 
@@ -110,6 +111,7 @@ private:
 	float m_height;
 	BitmapPrivate *p;
 	IntRect m_TextRect;
+	CCRenderTexture* m_fontRender;
 };
 
 #endif // BITMAP_H

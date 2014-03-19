@@ -53,19 +53,25 @@ private:
 	{
 		Vec2i pos;
 		CCSprite* sp;
+		int x,y,z;
 	};
 	vector<Tile> m_tiles;
 
 	static int handler_method_drawMap(int prt1,void* ptr2);
-	static int handler_method_setoxy(int ptr1,void* ptr2);
+	static int handler_method_setox(int ptr1,void* ptr2);
+	static int handler_method_setoy(int ptr1,void* ptr2);
 	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd);
-	static int Tilemap::handler_method_composite( int ptr1,void* ptr2 );
+	static int handler_method_composite( int ptr1,void* ptr2 );
+	static int handler_method_release(int ptr1,void* ptr2);
+	void orderTileZ(CCSprite* tilesp,int x,int y,int z);
+
 	void drawMap();
 
 	void releaseResources();
 
 	virtual void composite();
 
+	
 };
 
 #endif // TILEMAP_H

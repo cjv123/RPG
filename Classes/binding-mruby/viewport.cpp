@@ -98,7 +98,7 @@ Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0)
 	initViewport(x,y,width,height);
 	ThreadHandler hander={handler_method_create,(int)this,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -179,7 +179,7 @@ void Viewport::composite()
 {
 	ThreadHandler hander={handler_method_composite,(int)this,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -189,11 +189,29 @@ void Viewport::draw()
 	
 }
 
+
+int Viewport::handler_method_release( int ptr1,void* ptr2 )
+{
+	Viewport* viewport = (Viewport*)ptr1;
+	if (viewport->m_clippingNode)
+	{
+		viewport->m_clippingNode->removeFromParentAndCleanup(true);
+		viewport->m_clippingNode = NULL;
+	}
+	return 0;
+}
+
+
 /* Disposable */
 void Viewport::releaseResources()
 {
-	delete p;
-	m_clippingNode->removeFromParentAndCleanup(true);
+	if (p)
+		delete p;
+	
+	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 

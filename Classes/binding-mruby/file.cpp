@@ -6,6 +6,10 @@
 #include <stdio.h>
 
 #include <vector>
+#include <string>
+using namespace std;
+#include <cocos2d.h>
+using namespace cocos2d;
 
 
 /* File class methods */
@@ -248,10 +252,17 @@ MRB_FUNCTION(fileTestDoesExist)
 {
 	const char *filename;
 	mrb_get_args(mrb, "z", &filename);
+	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
+	string filepath = writepath + filename;
+	bool ret = false;
+	FILE* f = fopen(filepath.c_str(),"r");
+	if (f)
+	{
+		fclose(f);
+		ret = true;
+	}
 
-	int result=-1;
-
-	return mrb_bool_value(result == 0);
+	return mrb_bool_value(ret);
 }
 
 MRB_FUNCTION(fileTestIsFile)

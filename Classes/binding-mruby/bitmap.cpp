@@ -106,21 +106,11 @@ Bitmap::~Bitmap()
 
 int Bitmap::width() const
 {
-	if (NULL!=m_emuBitmap)
-	{
-		return m_emuBitmap->getContentSize().width;
-	}
-	
 	return m_width;
 }
 
 int Bitmap::height() const
 {
-	if (NULL!=m_emuBitmap)
-	{
-		return m_emuBitmap->getContentSize().height;
-	}
-
 	return m_height;
 }
 

@@ -1,6 +1,7 @@
 #include <mruby.h>
 #include <mruby/string.h>
 #include <mruby/compile.h>
+#include <mruby/array.h>
 #include <string.h>
 #include "binding-util.h"
 
@@ -194,43 +195,195 @@ MRB_FUNCTION(kernelInteger)
 
 MRB_METHOD(string_gsub)
 {
-	mrb_value blk, match_expr, replace_expr = mrb_nil_value();
-	int const argc = mrb_get_args(mrb, "&o|S", &blk, &match_expr, &replace_expr);
+	mrb_value block, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &block, &match_expr, &replace_expr);
 
 	if(mrb_string_p(match_expr)) {
 		mrb_value argv[] = { match_expr, replace_expr };
-		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, blk);
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, block);
 	}
 
-	if(!mrb_nil_p(blk) && !mrb_nil_p(replace_expr)) {
+	if(!mrb_nil_p(block) && !mrb_nil_p(replace_expr)) {
 		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
 	}
+	char* self_str = mrb_string_value_ptr(mrb,self);
+	mrb_value ret_str = mrb_str_new_cstr(mrb,self_str);
+	char* findret = mrb_string_value_ptr(mrb,ret_str);
+	while (1)
+	{
+		if(*findret==0)
+			break;
 
-	RClass* klass = mrb_class(mrb,match_expr);
-	const char* classname = mrb_class_name(mrb,klass);
-	mrb_value par = mrb_str_new_cstr(mrb,"/b/");
+		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+		if (RSTRING_LEN(regchar)==0)
+			break;
 
-	mrb_value ret = mrb_funcall(mrb, match_expr, "match", 1, par);
-	klass = mrb_class(mrb,ret);
-	classname = mrb_class_name(mrb,klass);
+		char findchar[1024]={0};
+		strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
 
-	//mrb_str_cat(mrb, result, RSTRING_PTR(self) + last_end_pos, RSTRING_LEN(self) - last_end_pos);
-	return mrb_nil_value();
+		mrb_value blockret = mrb_yield(mrb,block,regchar);
+		char* blockret_str = RSTRING_PTR(blockret);
+		
+		findret = strstr(findret,findchar);
+		memcpy(findret,blockret_str,RSTRING_LEN(regchar));
+		findret+=RSTRING_LEN(regchar);
+	}
+
+	return ret_str;
+}
+
+MRB_METHOD(string_gsub2)
+{
+	mrb_value block, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &block, &match_expr, &replace_expr);
+
+	if(mrb_string_p(match_expr)) {
+		mrb_value argv[] = { match_expr, replace_expr };
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, block);
+	}
+
+	if(!mrb_nil_p(block) && !mrb_nil_p(replace_expr)) {
+		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
+	}
+	char* self_str = mrb_string_value_ptr(mrb,self);
+	char* findret = self_str;
+	while (1)
+	{
+		if(*findret==0)
+			break;
+
+		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+		if (RSTRING_LEN(regchar)==0)
+			break;
+
+		char findchar[1024]={0};
+		strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
+
+		mrb_value blockret = mrb_yield(mrb,block,regchar);
+		char* ret_str = RSTRING_PTR(blockret);
+
+		findret = strstr(findret,findchar);
+		memcpy(findret,ret_str,RSTRING_LEN(regchar));
+		findret+=RSTRING_LEN(regchar);
+	}
+
+	return self;
 }
 
 MRB_METHOD(string_sub)
 {
-	return mrb_nil_value();
+	mrb_value block, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &block, &match_expr, &replace_expr);
+
+	if(mrb_string_p(match_expr)) {
+		mrb_value argv[] = { match_expr, replace_expr };
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, block);
+	}
+
+	if(!mrb_nil_p(block) && !mrb_nil_p(replace_expr)) {
+		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
+	}
+	char* self_str = mrb_string_value_ptr(mrb,self);
+	mrb_value ret_str = mrb_str_new_cstr(mrb,self_str);
+
+	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, ret_str);
+	mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+
+	char findchar[1024]={0};
+	strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
+
+	mrb_value blockret = mrb_yield(mrb,block,regchar);
+	char* blockret_str = RSTRING_PTR(blockret);
+
+	char* findret = strstr(RSTRING_PTR(ret_str),findchar);
+	memcpy(findret,blockret_str,RSTRING_LEN(regchar));
+
+	return ret_str;
+}
+
+MRB_METHOD(string_sub2)
+{
+	mrb_value block, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &block, &match_expr, &replace_expr);
+
+	if(mrb_string_p(match_expr)) {
+		mrb_value argv[] = { match_expr, replace_expr };
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, block);
+	}
+
+	if(!mrb_nil_p(block) && !mrb_nil_p(replace_expr)) {
+		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
+	}
+	char* self_str = mrb_string_value_ptr(mrb,self);
+
+	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, self);
+	mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+
+	char findchar[1024]={0};
+	strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
+
+	mrb_value blockret = mrb_yield(mrb,block,regchar);
+	char* ret_str = RSTRING_PTR(blockret);
+
+	char* findret = strstr(self_str,findchar);
+	memcpy(findret,ret_str,RSTRING_LEN(regchar));
+
+	return self;
 }
 
 MRB_METHOD(string_split)
 {
-	return mrb_nil_value();
+	return self;
 }
 
 MRB_METHOD(string_scan)
 {
-	return mrb_nil_value();
+	mrb_value block, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &block, &match_expr, &replace_expr);
+
+	if(mrb_string_p(match_expr)) {
+		mrb_value argv[] = { match_expr, replace_expr };
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, block);
+	}
+
+	if(!mrb_nil_p(block) && !mrb_nil_p(replace_expr)) {
+		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
+	}
+	char* self_str = mrb_string_value_ptr(mrb,self);
+	char* findret = self_str;
+	mrb_value ret_array = mrb_ary_new(mrb);
+	int i=0;
+	while (1)
+	{
+		if(*findret==0)
+			break;
+
+		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+		if (RSTRING_LEN(regchar)==0)
+			break;
+
+		if(mrb_nil_p(block))
+		{
+			mrb_ary_push(mrb,ret_array,regchar);
+		}
+		else
+		{
+			mrb_value blockret = mrb_yield(mrb,block,regchar);
+			mrb_ary_push(mrb,ret_array,blockret);
+		}
+
+		char findchar[1024]={0};
+		strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
+		
+		findret = strstr(findret,findchar);
+		findret+=RSTRING_LEN(regchar);
+
+	}
+
+	return ret_array;
 }
 
 void kernelBindingInit(mrb_state *mrb)
@@ -248,7 +401,9 @@ void kernelBindingInit(mrb_state *mrb)
 	mrb_define_module_function(mrb, module, "Integer", kernelInteger, MRB_ARGS_REQ(1));
 
 	mrb_define_method(mrb, mrb->string_class, "gsub", string_gsub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
-	mrb_define_method(mrb, mrb->string_class, "onig_regexp_sub", string_sub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
-	mrb_define_method(mrb, mrb->string_class, "onig_regexp_split", string_split, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, mrb->string_class, "onig_regexp_scan", string_scan, MRB_ARGS_REQ(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "gsub!", string_gsub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "sub", string_sub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "sub2", string_sub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "split", string_split, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, mrb->string_class, "scan", string_scan, MRB_ARGS_REQ(1) | MRB_ARGS_BLOCK());
 }

@@ -205,13 +205,13 @@ int Viewport::handler_method_release( int ptr1,void* ptr2 )
 /* Disposable */
 void Viewport::releaseResources()
 {
-	if (p)
-		delete p;
-	
 	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+
+	if (p)
+		delete p;
 }
 
 

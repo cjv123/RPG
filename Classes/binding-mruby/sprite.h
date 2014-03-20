@@ -53,6 +53,7 @@ private:
 	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_flash(int ptr1,void* ptr2);
 	static int handler_method_composite(int ptr1,void* ptr2);
+	static int handler_method_release(int ptr1,void* ptr2);
 
 	SpritePrivate *p;
 
@@ -66,6 +67,7 @@ private:
 
 	Color* m_flashColor;
 	int m_flashDuration;
+	CCSprite* m_sprite;
 };
 
 #endif // SPRITE_H

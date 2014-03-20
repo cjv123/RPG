@@ -102,3 +102,7 @@ License: MIT
 GEM: mruby-bin-mruby
 Copyright (c) 2014 mruby developers
 License: MIT
+
+GEM: mruby-hs-regexp
+Copyright (c) 2014 Masamitsu MURASE
+License: BSD

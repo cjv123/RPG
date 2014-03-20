@@ -135,7 +135,12 @@ MRB_FUNCTION(kernelExit)
 {
 	MRB_FUN_UNUSED_PARAM;
 
+#ifdef WIN32
+	system("Pause");
+#endif
 	CCDirector::sharedDirector()->end();
+
+	
 
 	return mrb_nil_value();
 }
@@ -187,6 +192,47 @@ MRB_FUNCTION(kernelInteger)
 	return mrb_to_int(mrb, obj);
 }
 
+MRB_METHOD(string_gsub)
+{
+	mrb_value blk, match_expr, replace_expr = mrb_nil_value();
+	int const argc = mrb_get_args(mrb, "&o|S", &blk, &match_expr, &replace_expr);
+
+	if(mrb_string_p(match_expr)) {
+		mrb_value argv[] = { match_expr, replace_expr };
+		return mrb_funcall_with_block(mrb, self, mrb_intern_lit(mrb, "string_gsub"), argc, argv, blk);
+	}
+
+	if(!mrb_nil_p(blk) && !mrb_nil_p(replace_expr)) {
+		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
+	}
+
+	RClass* klass = mrb_class(mrb,match_expr);
+	const char* classname = mrb_class_name(mrb,klass);
+	mrb_value par = mrb_str_new_cstr(mrb,"/b/");
+
+	mrb_value ret = mrb_funcall(mrb, match_expr, "match", 1, par);
+	klass = mrb_class(mrb,ret);
+	classname = mrb_class_name(mrb,klass);
+
+	//mrb_str_cat(mrb, result, RSTRING_PTR(self) + last_end_pos, RSTRING_LEN(self) - last_end_pos);
+	return mrb_nil_value();
+}
+
+MRB_METHOD(string_sub)
+{
+	return mrb_nil_value();
+}
+
+MRB_METHOD(string_split)
+{
+	return mrb_nil_value();
+}
+
+MRB_METHOD(string_scan)
+{
+	return mrb_nil_value();
+}
+
 void kernelBindingInit(mrb_state *mrb)
 {
 	RClass *module = mrb->kernel_module;
@@ -201,4 +247,8 @@ void kernelBindingInit(mrb_state *mrb)
 	mrb_define_module_function(mrb, module, "save_data", kernelSaveData, MRB_ARGS_REQ(2));
 	mrb_define_module_function(mrb, module, "Integer", kernelInteger, MRB_ARGS_REQ(1));
 
+	mrb_define_method(mrb, mrb->string_class, "gsub", string_gsub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "onig_regexp_sub", string_sub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "onig_regexp_split", string_split, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, mrb->string_class, "onig_regexp_scan", string_scan, MRB_ARGS_REQ(1) | MRB_ARGS_BLOCK());
 }

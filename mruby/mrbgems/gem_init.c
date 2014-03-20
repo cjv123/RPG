@@ -30,6 +30,7 @@ void GENERATED_TMP_mrb_mruby_fiber_gem_init(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_toplevel_ext_gem_init(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_bin_mirb_gem_init(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_bin_mruby_gem_init(mrb_state* mrb);
+void GENERATED_TMP_mrb_mruby_hs_regexp_gem_init(mrb_state* mrb);
 
 void GENERATED_TMP_mrb_mruby_sprintf_gem_final(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_print_gem_final(mrb_state* mrb);
@@ -51,6 +52,7 @@ void GENERATED_TMP_mrb_mruby_fiber_gem_final(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_toplevel_ext_gem_final(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_bin_mirb_gem_final(mrb_state* mrb);
 void GENERATED_TMP_mrb_mruby_bin_mruby_gem_final(mrb_state* mrb);
+void GENERATED_TMP_mrb_mruby_hs_regexp_gem_final(mrb_state* mrb);
 
 void
 mrb_init_mrbgems(mrb_state *mrb) {
@@ -74,6 +76,7 @@ GENERATED_TMP_mrb_mruby_fiber_gem_init(mrb);
 GENERATED_TMP_mrb_mruby_toplevel_ext_gem_init(mrb);
 GENERATED_TMP_mrb_mruby_bin_mirb_gem_init(mrb);
 GENERATED_TMP_mrb_mruby_bin_mruby_gem_init(mrb);
+GENERATED_TMP_mrb_mruby_hs_regexp_gem_init(mrb);
 }
 
 void
@@ -98,4 +101,5 @@ GENERATED_TMP_mrb_mruby_fiber_gem_final(mrb);
 GENERATED_TMP_mrb_mruby_toplevel_ext_gem_final(mrb);
 GENERATED_TMP_mrb_mruby_bin_mirb_gem_final(mrb);
 GENERATED_TMP_mrb_mruby_bin_mruby_gem_final(mrb);
+GENERATED_TMP_mrb_mruby_hs_regexp_gem_final(mrb);
 }

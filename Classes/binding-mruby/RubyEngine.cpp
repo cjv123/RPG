@@ -33,7 +33,6 @@ extern void fileBindingInit(mrb_state* mrb);
 extern void inputBindingInit(mrb_state* mrb);
 extern void planeBindingInit(mrb_state *mrb);
 
-
 static const char * mrbValueString(mrb_value value)
 {
 	return mrb_string_p(value) ? RSTRING_PTR(value) : 0;
@@ -180,6 +179,13 @@ void RubyEngine::initRMXPScript( const char* filename )
 
 		struct RMXPScript scriptdata={id,scriptname,decodeBuffer};
 		m_RMXPScripts.push_back(scriptdata);
+
+// 		char header[3] = {0xef, 0xbb, 0xbf}; 
+// 		string path = scriptdata.name + ".rb";
+// 		FILE* f = fopen(path.c_str(),"wb");
+// 		fwrite(header,sizeof(char),3,f);
+// 		fwrite(decodeBuffer.c_str(),sizeof(char),decodeBuffer.size(),f);
+// 		fclose(f);
 	}
 	delete [] data;
 }

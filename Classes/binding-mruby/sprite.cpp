@@ -96,7 +96,7 @@ struct SpritePrivate
 	}
 };
 
-Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0)
+Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0),m_sprite(0)
 {
 	p = new SpritePrivate;
 	p->lastRect = *p->srcRect;
@@ -141,8 +141,10 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	Bitmap* bitmap = (Bitmap*)ptr2;
 
 	sprite->p->bitmap = bitmap;
-	bitmap->getEmuBitmap()->setAnchorPoint(ccp(0,1));
-	bitmap->getEmuBitmap()->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
+
+	sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
+	sprite->m_sprite->setAnchorPoint(ccp(0,1));
+	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
 
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
@@ -150,7 +152,7 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		handler_method_composite((int)sprite,(void*)NULL);
 	}
 	else
-		SceneMain::getMainLayer()->addChild(bitmap->getEmuBitmap());
+		SceneMain::getMainLayer()->addChild(sprite->m_sprite);
 	return 0;
 }
 
@@ -167,7 +169,7 @@ void Sprite::setBitmap(Bitmap *bitmap)
 int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emuBitmap = sprite->p->bitmap->getEmuBitmap();
+	CCSprite* emuBitmap = sprite->m_sprite;
 	if (NULL != emuBitmap)
 	{
 		Rect* rect = (Rect*)ptr2;
@@ -212,9 +214,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
 	
-	if (sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
+	if (sprite->m_sprite)
 	{
-		CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+		CCSprite* emubitmap = sprite->m_sprite;
 		switch (propstruct->prop_type)
 		{
 		case SetPropStruct::x:
@@ -383,7 +385,7 @@ void Sprite::setVisible(bool value)
 int Sprite::handler_method_set_mirror( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+	CCSprite* emubitmap = sprite->m_sprite;
 	if (NULL != emubitmap)
 	{
 		emubitmap->setFlipX((bool)ptr2);
@@ -404,7 +406,7 @@ void Sprite::setMirror(bool mirrored)
 int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+	CCSprite* emubitmap = sprite->m_sprite;
 	if (NULL != emubitmap)
 	{
 		emubitmap->setOpacity((int)ptr2);
@@ -442,11 +444,28 @@ void Sprite::setBlendType(int type)
 	
 }
 
+
+int Sprite::handler_method_release( int ptr1,void* ptr2 )
+{
+	Sprite* sprite = (Sprite*)ptr1;
+	if (sprite->m_sprite)
+	{
+		sprite->m_sprite->removeFromParentAndCleanup(true);
+	}
+	return 0;
+}
+
+
 /* Disposable */
 void Sprite::releaseResources()
 {
-	
-	delete p;
+	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+
+	if (p)
+		delete p;
 }
 
 /* SceneElement */
@@ -469,7 +488,7 @@ int Sprite::handler_method_flash( int ptr1,void* ptr2 )
 	float duration = flash_ptr->duration*1.0f/60.0f;
 	if (sprite->p->bitmap)
 	{
-		CCSprite* emubitmap = sprite->p->bitmap->getEmuBitmap();
+		CCSprite* emubitmap = sprite->m_sprite;
 		CCSprite* pSprite = CCSprite::createWithTexture(emubitmap->getTexture(),emubitmap->getTextureRect());
 		pSprite->setAnchorPoint(ccp(0,0));
 
@@ -531,9 +550,9 @@ int Sprite::handler_method_composite( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Viewport* viewport = sprite->p->viewport;
 
-	if (viewport && viewport->getClippingNode() && sprite->p->bitmap && sprite->p->bitmap->getEmuBitmap())
+	if (viewport && viewport->getClippingNode() && sprite->m_sprite)
 	{
-		CCSprite* pSprite = sprite->p->bitmap->getEmuBitmap();
+		CCSprite* pSprite = sprite->m_sprite;
 		if(!pSprite->getParent())
 			viewport->getClippingNode()->addChild(pSprite);
 		pSprite->setPosition(ccp(sprite->p->x,rgss_y_to_cocos_y(sprite->p->y,viewport->getRect()->height)));

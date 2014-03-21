@@ -208,13 +208,15 @@ MRB_METHOD(string_gsub)
 	}
 	char* self_str = mrb_string_value_ptr(mrb,self);
 	mrb_value ret_str = mrb_str_new_cstr(mrb,self_str);
-	char* findret = mrb_string_value_ptr(mrb,ret_str);
+	char* findret = RSTRING_PTR(ret_str);
 	while (1)
 	{
 		if(*findret==0)
 			break;
 
 		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		if (mrb_nil_p(matchdata))
+			break;
 		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 		if (RSTRING_LEN(regchar)==0)
 			break;
@@ -228,6 +230,11 @@ MRB_METHOD(string_gsub)
 		findret = strstr(findret,findchar);
 		memcpy(findret,blockret_str,RSTRING_LEN(regchar));
 		findret+=RSTRING_LEN(regchar);
+	}
+
+	if (findret == RSTRING_PTR(ret_str))
+	{
+		return mrb_nil_value();
 	}
 
 	return ret_str;
@@ -254,6 +261,8 @@ MRB_METHOD(string_gsub2)
 			break;
 
 		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		if (mrb_nil_p(matchdata))
+			break;
 		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 		if (RSTRING_LEN(regchar)==0)
 			break;
@@ -267,6 +276,11 @@ MRB_METHOD(string_gsub2)
 		findret = strstr(findret,findchar);
 		memcpy(findret,ret_str,RSTRING_LEN(regchar));
 		findret+=RSTRING_LEN(regchar);
+	}
+
+	if (findret == self_str)
+	{
+		return mrb_nil_value();
 	}
 
 	return self;
@@ -289,6 +303,9 @@ MRB_METHOD(string_sub)
 	mrb_value ret_str = mrb_str_new_cstr(mrb,self_str);
 
 	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, ret_str);
+	if (mrb_nil_p(matchdata))
+		return mrb_nil_value();
+
 	mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 
 	char findchar[1024]={0};
@@ -319,6 +336,9 @@ MRB_METHOD(string_sub2)
 	char* self_str = mrb_string_value_ptr(mrb,self);
 
 	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, self);
+	if(mrb_nil_p(matchdata))
+		return mrb_nil_value();
+
 	mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 
 	char findchar[1024]={0};
@@ -335,6 +355,7 @@ MRB_METHOD(string_sub2)
 
 MRB_METHOD(string_split)
 {
+
 	return self;
 }
 
@@ -361,6 +382,8 @@ MRB_METHOD(string_scan)
 			break;
 
 		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		if (mrb_nil_p(matchdata))
+			break;
 		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 		if (RSTRING_LEN(regchar)==0)
 			break;
@@ -386,6 +409,59 @@ MRB_METHOD(string_scan)
 	return ret_array;
 }
 
+MRB_METHOD(string_slice2)
+{
+	char* src_str=RSTRING_PTR(self);
+	char ret_str[100]={0};
+
+	if (mrb->c->ci->argc == 1)
+	{
+		mrb_value match_expr;
+		mrb_get_args(mrb, "o", &match_expr);
+		
+		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,src_str));
+
+		if (mrb_nil_p(matchdata))
+			return mrb_nil_value();
+		
+		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
+		char* regchar_c = RSTRING_PTR(regchar);
+		int del_len = 0;
+
+		//жпндеп╤о
+		char utf8check_tmp = regchar_c[0];
+		int i=7;
+		while (1)
+		{
+			char checkbyte = 1;
+			if ((utf8check_tmp & (checkbyte<<i))!=0)
+				del_len++;
+			else
+				break;
+			i--;
+		}
+
+		if (del_len==0)
+			del_len = RSTRING_LEN(regchar);
+
+		strncpy(ret_str,RSTRING_PTR(regchar),del_len);
+		char* delp = strstr(src_str,RSTRING_PTR(regchar));
+		strcpy(delp,delp+del_len);
+	
+	}
+	else
+	{
+		mrb_int del_start,del_len;
+		mrb_get_args(mrb, "ii", &del_start, &del_len);
+
+		char* delp =src_str+del_start-1;
+		strncpy(ret_str,delp,del_len);
+		strcpy(delp,delp+del_len);
+	}
+
+	return mrb_str_new_cstr(mrb,ret_str);
+}
+
 void kernelBindingInit(mrb_state *mrb)
 {
 	RClass *module = mrb->kernel_module;
@@ -406,4 +482,5 @@ void kernelBindingInit(mrb_state *mrb)
 	mrb_define_method(mrb, mrb->string_class, "sub2", string_sub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
 	mrb_define_method(mrb, mrb->string_class, "split", string_split, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, mrb->string_class, "scan", string_scan, MRB_ARGS_REQ(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "slice!",string_slice2,MRB_ARGS_REQ(2)|MRB_ARGS_OPT(1));
 }

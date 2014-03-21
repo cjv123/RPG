@@ -141,8 +141,10 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	Bitmap* bitmap = (Bitmap*)ptr2;
 
 	sprite->p->bitmap = bitmap;
-
-	sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
+	if (sprite->p->bitmap->getFilename()!="")
+		sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
+	else 
+		sprite->m_sprite = CCSprite::create();
 	sprite->m_sprite->setAnchorPoint(ccp(0,1));
 	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
 
@@ -153,6 +155,7 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	}
 	else
 		SceneMain::getMainLayer()->addChild(sprite->m_sprite);
+
 	return 0;
 }
 
@@ -178,7 +181,9 @@ int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 		CCRect texturerect = CCRectMake(rect->getX(),
 			rect->getY(),
 			rect->getWidth(),rect->getHeight());
-		emuBitmap->setTextureRect(texturerect);
+		if (sprite->p->bitmap->getFilename()!="")
+			emuBitmap->setTextureRect(texturerect);
+		emuBitmap->setContentSize(CCSizeMake(rect->width,rect->height));
 		emuBitmap->setAnchorPoint(ccp(sprite->p->ox/emuBitmap->getContentSize().width,
 			1-sprite->p->oy/emuBitmap->getContentSize().height));
 

@@ -263,7 +263,8 @@ int Bitmap::handler_method_clear( int ptr1,void* ptr2 )
 	if (NULL!= bitmap->getEmuBitmap())
 	{
 		bitmap->m_emuBitmap->removeAllChildrenWithCleanup(true);
-		bitmap->m_emuBitmap = NULL;
+		//bitmap->m_fontRender->release();
+		bitmap->m_fontRender = NULL;
 	}
 
 	return 0;
@@ -319,7 +320,7 @@ struct DrawtextStruct
 
 int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 {
-	Bitmap* bitmap = (Bitmap*)ptr1;
+ 	Bitmap* bitmap = (Bitmap*)ptr1;
 	if (NULL==bitmap->m_emuBitmap)
 		return -1;
 
@@ -434,7 +435,11 @@ void Bitmap::setFont(Font* value)
 
 IntRect Bitmap::textSize(const char *str)
 {
-	return m_TextRect;
+	CCImage* image = new CCImage;
+	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());
+	IntRect rect(0,0,image->getWidth(),image->getHeight());
+	delete image;
+	return rect;
 }
 
 void Bitmap::flush() const

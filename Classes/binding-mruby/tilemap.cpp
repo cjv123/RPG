@@ -245,6 +245,8 @@ Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
 Tilemap::~Tilemap()
 {
 	dispose();
+
+	delete p;
 }
 
 void Tilemap::update()
@@ -389,9 +391,6 @@ void Tilemap::releaseResources()
 	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
-
-	if(p)
-		delete p;
 }
 
 

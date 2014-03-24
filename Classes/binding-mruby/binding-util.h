@@ -7,7 +7,7 @@
 #include <mruby/class.h>
 
 #include <stdio.h>
-
+#include <pthread.h>
 
 enum CommonSymbol
 {
@@ -333,12 +333,14 @@ setProperty(mrb_state *mrb, mrb_value self,
 	               propObject);
 }
 
+
 template<typename T>
-void
-freeInstance(mrb_state *, void *instance)
+void freeInstance( mrb_state *, void *instance )
 {
-	delete static_cast<T*>(instance);
+	T* p = static_cast<T*>(instance);
+	delete p;
 }
+
 
 inline mrb_value
 mrb_bool_value(bool value)
@@ -402,3 +404,4 @@ MRB_METHOD_PUB(inspectObject);
 
 
 #endif // BINDINGUTIL_H
+

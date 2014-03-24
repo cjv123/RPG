@@ -346,5 +346,5 @@ void Rect::onChange()
 
 Rect::~Rect()
 {
-	m_delegates.clear();
+	//m_delegates.clear();
 }

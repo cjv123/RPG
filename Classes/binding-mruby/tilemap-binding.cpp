@@ -22,7 +22,7 @@ MRB_METHOD(tilemapAutotilesSet)
 	mrb_int i;
 	mrb_value bitmapObj;
 
-	mrb_get_args(mrb, "io", &i, &bitmapObj);
+	mrb_get_args(mrb, "io", &i, &bitmapObj); 
 
 	Bitmap *bitmap = getPrivateDataCheck<Bitmap>(mrb, bitmapObj, BitmapType);
 

@@ -100,8 +100,9 @@ Bitmap::Bitmap(const Bitmap &other): m_emuBitmap(NULL),m_fontRender(0)
 
 Bitmap::~Bitmap()
 {
-	
 	dispose();
+	if (p)
+		delete p;
 }
 
 int Bitmap::width() const
@@ -473,6 +474,7 @@ int Bitmap::handler_method_release( int ptr1,void* ptr2 )
 		bitmap->m_fontRender->release();
 		bitmap->m_fontRender = NULL;
 	}
+
 	return 0;
 }
 
@@ -483,8 +485,7 @@ void Bitmap::releaseResources()
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
-	if (p)
-		delete p;
+	
 }
 
 CCSprite* Bitmap::getEmuBitmap()

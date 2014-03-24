@@ -69,6 +69,7 @@ DEF_TYPE(Color);
 DEF_TYPE(Tone);
 DEF_TYPE(Rect);
 
+
 #define INIT_FUN(Klass, param_type, param_t_s, last_param_def) \
 	MRB_METHOD(Klass##Initialize) \
 	{ \
@@ -168,7 +169,7 @@ CLONE_FUN(Rect)
 
 void etcBindingInit(mrb_state *mrb)
 {
-	RClass *klass;
+	RClass *klass =NULL;
 
 	INIT_BIND(Color);
 	MRB_ATTR_RW(Color, red);
@@ -187,5 +188,6 @@ void etcBindingInit(mrb_state *mrb)
 	MRB_ATTR_RW(Rect, y);
 	MRB_ATTR_RW(Rect, width);
 	MRB_ATTR_RW(Rect, height);
+
 	mrb_define_method(mrb, klass, "empty", RectEmpty, MRB_ARGS_NONE());
 }

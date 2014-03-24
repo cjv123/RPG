@@ -208,7 +208,7 @@ void* RubyEngine::networkThread( void* data )
 	int script_cout = engine->m_RMXPScripts.size();
 	for (int i=0;i<script_cout;i++)
 	{
-		printf("run script name:%s\n",engine->m_RMXPScripts[i].name.c_str());
+		//printf("run script name:%s\n",engine->m_RMXPScripts[i].name.c_str());
 		int ai = mrb_gc_arena_save(engine->m_mrb);
 		engine->runScript(engine->m_RMXPScripts[i].script.c_str());
 		mrb_gc_arena_restore(engine->m_mrb, ai);

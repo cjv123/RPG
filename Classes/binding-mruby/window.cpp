@@ -146,7 +146,7 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 {
 	Window* window = (Window*)par1;
 	window->m_winNode = CCNodeRGBA::create();
-	window->m_winNode->setCascadeOpacityEnabled(true);
+	//window->m_winNode->setCascadeOpacityEnabled(true);
 	SceneMain::getMainLayer()->addChild(window->m_winNode);
 
 	window->m_contentNode = CCNodeRGBA::create();
@@ -171,6 +171,8 @@ Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0),m_
 Window::~Window()
 {
 	dispose();
+
+	delete p;
 }
 
 void Window::update()
@@ -330,7 +332,7 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 {
 	Window* window = (Window*)ptr1;
 
-	if(window->p->cursorRect && window->p->cursorRect->width && window->p->cursorRect->height
+	if(window->p->cursorRect 
 		&& window->p->windowskin
 		&& window->p->windowskin->getEmuBitmap()
 		&& window->m_contentNode)
@@ -356,6 +358,18 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 				cursorSp->runAction(CCRepeatForever::create(seq));
 			}
 		}
+
+		if (window->p->cursorRect->width == 0 && window->p->cursorRect->height==0)
+		{
+			if (cursorSp->isVisible())
+				cursorSp->setVisible(false);
+		}
+		else
+		{
+			if (!cursorSp->isVisible())
+				cursorSp->setVisible(true);
+		}
+
 		cursorSp->setContentSize(CCSizeMake(window->p->cursorRect->width,window->p->cursorRect->height));
 		cursorSp->setPosition(ccp(window->p->cursorRect->x,rgss_y_to_cocos_y(window->p->cursorRect->y,window->m_contentNode->getContentSize().height)));
 	}
@@ -431,12 +445,12 @@ void Window::setOpacity(int value)
 	if (p->opacity == value)
 		return;
 
-	p->opacity = value;
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::opacity;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->opacity = value;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
@@ -446,12 +460,12 @@ void Window::setBackOpacity(int value)
 	if (p->backOpacity == value)
 		return;
 
-	p->backOpacity = value;
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::back_opacity;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->backOpacity = value;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
@@ -460,13 +474,13 @@ void Window::setContentsOpacity(int value)
 {
 	if (p->contentsOpacity == value)
 		return;
-
-	p->contentsOpacity = value;
+	
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::contents_opacity;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->contentsOpacity = value;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
@@ -478,7 +492,6 @@ void Window::draw()
 
 void Window::setZ(int value)
 {
-	return;
 	p->z = value;
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::z;
@@ -520,8 +533,6 @@ void Window::releaseResources()
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
-	if (p)
-		delete p;
 }
 
 void Window::composite()
@@ -550,6 +561,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	winsp->setScaleX(window->p->size.x/winsp->getContentSize().width);
 	winsp->setScaleY(window->p->size.y/winsp->getContentSize().height);
 	winsp->setOpacity(bgOpacity);
+	window->m_winsp = winsp;
 
 	CCScale9Sprite* border = CCScale9Sprite::createWithSpriteFrame(
 		CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(bordersSrc.x,bordersSrc.y,bordersSrc.w,bordersSrc.h)));

@@ -69,6 +69,7 @@ DEF_ATTR_SIMPLE(Plane, Tone,    Tone*,   p->tone)
 Plane::~Plane()
 {
 	dispose();
+	delete p;
 }
 
 int Plane::handler_method_set_bitmap( int ptr1,void* prt2 )
@@ -175,8 +176,7 @@ void Plane::aboutToAccess() const
 
 void Plane::releaseResources()
 {
-	if (p)
-		delete p;
+	
 }
 
 extern pthread_mutex_t s_thread_handler_mutex;

@@ -10,11 +10,17 @@ public:
 		: disposed(false)
 	{}
 
-	virtual ~Disposable() {}
+	virtual ~Disposable() 
+	{
+
+	}
 
 	void dispose();
 
-	bool isDisposed() const { return disposed; }
+	bool isDisposed() const 
+	{ 
+		return disposed; 
+	}
 
 
 protected:

@@ -108,6 +108,8 @@ Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0),m_sprite
 Sprite::~Sprite()
 {
 	dispose();
+
+	delete p;
 }
 
 #define DISP_CLASS_NAME "sprite"
@@ -147,6 +149,7 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		sprite->m_sprite = CCSprite::create();
 	sprite->m_sprite->setAnchorPoint(ccp(0,1));
 	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
+	sprite->m_sprite->setZOrder(sprite->p->z);
 
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
@@ -193,7 +196,7 @@ int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 
 void Sprite::setSrcRect(Rect *rect)
 {
-	if (rect->width == 0)
+	if (rect == p->srcRect)
 		return;
 	ThreadHandler hander={handler_method_set_srcrect,(int)this,(void*)rect};
 	pthread_mutex_lock(&s_thread_handler_mutex);
@@ -469,8 +472,6 @@ void Sprite::releaseResources()
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
-	if (p)
-		delete p;
 }
 
 /* SceneElement */

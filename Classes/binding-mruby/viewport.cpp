@@ -32,7 +32,7 @@ struct ViewportPrivate
 		rect(&tmp.rect),
 		color(&tmp.color),
 		tone(&tmp.tone),
-		isOnScreen(false),ox(0),oy(0)
+		isOnScreen(false),ox(0),oy(0),z(0)
 	{
 		rect->set(x,y,width,height);
 		updateRectCon();
@@ -116,6 +116,8 @@ void Viewport::initViewport(int x, int y, int width, int height)
 Viewport::~Viewport()
 {
 	dispose();
+
+	delete p;
 }
 
 #define DISP_CLASS_NAME "viewport"
@@ -150,6 +152,8 @@ void Viewport::setZ(int value)
 
 void Viewport::setRect(Rect *value)
 {
+	if (value == p->rect)
+		return;
 	p->rect = value;
 	composite();
 }
@@ -171,6 +175,8 @@ int Viewport::handler_method_composite( int ptr1,void* ptr2 )
 
 	clipper->setPosition(ccp(viewport->getRect()->getX() - viewport->getOX(),
 		rgss_y_to_cocos_y(viewport->getRect()->getY() - viewport->getOY(),SceneMain::getMainLayer()->getContentSize().height)-clipper->getContentSize().height ));
+	if (viewport->p->z)
+		clipper->setZOrder(viewport->p->z);
 
 	return 0;
 }
@@ -210,8 +216,6 @@ void Viewport::releaseResources()
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
-	if (p)
-		delete p;
 }
 
 

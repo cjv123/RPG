@@ -129,3 +129,4 @@ MRB_METHOD_PUB(inspectObject)
 
 	return mrb_str_new_cstr(mrb, buffer);
 }
+

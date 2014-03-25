@@ -54,6 +54,7 @@ private:
 	static int handler_method_flash(int ptr1,void* ptr2);
 	static int handler_method_composite(int ptr1,void* ptr2);
 	static int handler_method_release(int ptr1,void* ptr2);
+	static int handler_method_setcolor(int ptr1,void* ptr2);
 
 	SpritePrivate *p;
 

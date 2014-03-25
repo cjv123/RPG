@@ -380,9 +380,10 @@ void Bitmap::drawText(const IntRect &rect, const char *str, int align)
 	ptr2->rect = rect;ptr2->str = str;ptr2->align = align;ptr2->font = new Font(*p->font);
 	ThreadHandler hander={handler_method_drawtext,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	m_TextRect = rect;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
-	m_TextRect = rect;
+	
 }
 
 /* http://www.lemoda.net/c/utf8-to-ucs2/index.html */
@@ -498,6 +499,16 @@ CCSprite* Bitmap::getEmuBitmap()
 std::string Bitmap::getFilename()
 {
 	return m_filename;
+}
+
+CCRenderTexture* Bitmap::getRenderTexture()
+{
+	return m_fontRender;
+}
+
+IntRect Bitmap::getTextRect()
+{
+	return m_TextRect;
 }
 
 

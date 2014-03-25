@@ -40,7 +40,7 @@ enum BlendType
 struct Color : public Serializable
 {
 	Color()
-	    : red(0), green(0), blue(0), alpha(0)
+	    : red(0), green(0), blue(0), alpha(255)
 	{}
 
 	Color(double red, double green, double blue, double alpha = 255);

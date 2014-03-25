@@ -33,6 +33,7 @@ struct SpritePrivate
 	bool isVisible;
 
 	Color *color;
+	Color lastcolor;
 	Tone *tone;
 
 	EtcTemps tmp;
@@ -131,9 +132,9 @@ DEF_ATTR_RD_SIMPLE(Sprite, Height,    int,     p->srcRect->height)
 DEF_ATTR_RD_SIMPLE(Sprite, Opacity,    int,    p->opacity)
 DEF_ATTR_RD_SIMPLE(Sprite, Visible,    bool,    p->isVisible)
 DEF_ATTR_RD_SIMPLE(Sprite, Viewport,    Viewport*, p->viewport)
+DEF_ATTR_RD_SIMPLE(Sprite, Color,       Color*, p->color)
 
 DEF_ATTR_SIMPLE(Sprite, BushOpacity, int,    p->bushOpacity)
-DEF_ATTR_SIMPLE(Sprite, Color,       Color*, p->color)
 DEF_ATTR_SIMPLE(Sprite, Tone,        Tone*,  p->tone)
 
 
@@ -146,15 +147,31 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	if (sprite->p->bitmap->getFilename()!="")
 		sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
 	else 
+	{
 		sprite->m_sprite = CCSprite::create();
+		sprite->m_sprite->setContentSize(CCSizeMake(bitmap->width(),bitmap->height()));
+	}
+
+	if (bitmap->getRenderTexture())
+	{
+		CCSprite* fontsp = CCSprite::createWithTexture(bitmap->getRenderTexture()->getSprite()->getTexture());
+		fontsp->setAnchorPoint(ccp(0,0));
+		fontsp->setFlipY(true);
+		sprite->m_sprite->addChild(fontsp);
+		fontsp->setPosition(ccp(bitmap->getTextRect().x,rgss_y_to_cocos_y(bitmap->getTextRect().y,bitmap->height())));
+	}
+
 	sprite->m_sprite->setAnchorPoint(ccp(0,1));
 	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
+
 	if (sprite->p->z)
 		sprite->m_sprite->setZOrder(sprite->p->z);
 	if (!sprite->p->isVisible)
 		sprite->m_sprite->setVisible(sprite->p->isVisible);
-
 	sprite->m_sprite->setOpacity(sprite->p->opacity);
+	if (sprite->p->color)
+		handler_method_setcolor((int)sprite,NULL);
+
 
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
@@ -568,6 +585,18 @@ void Sprite::update()
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 		m_flashDuration = 0;
 	}
+
+	if (!(p->color->red == p->lastcolor.red &&
+		p->color->green == p->lastcolor.green &&
+		p->color->blue == p->lastcolor.blue &&
+		p->color->alpha == p->lastcolor.alpha) )
+	{
+		ThreadHandler hander={handler_method_setcolor,(int)this,(void*)NULL};
+		pthread_mutex_lock(&s_thread_handler_mutex);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+		pthread_mutex_unlock(&s_thread_handler_mutex);
+		p->lastcolor = *p->color;
+	}
 }
 
 
@@ -597,6 +626,44 @@ void Sprite::onRectChange()
 	
 }
 
+int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
+{
+	Sprite* sprite = (Sprite*)ptr1;
 
+	if (sprite->m_sprite && sprite->p->color)
+	{
+		if ( sprite->p->color->red<255 && sprite->p->color->red>0
+			&& sprite->p->color->green<255 &&  sprite->p->color->green>0
+			&& sprite->p->color->blue<255 && sprite->p->color->blue>0)
+		{
+			sprite->m_sprite->setColor(ccc3(sprite->p->color->red,sprite->p->color->green,sprite->p->color->blue));
+		}
+
+		if((sprite->p->color->red==0 && 
+			sprite->p->color->green==0 && 
+			sprite->p->color->blue==0 && 
+			sprite->p->color->alpha==0 )
+		)
+		{
+			sprite->m_sprite->setOpacity(255);
+		}
+		else
+			sprite->m_sprite->setOpacity(sprite->p->color->alpha);
+		
+	}
+	return 0;
+}
+
+void Sprite::setColor(Color* value)
+{
+	if(value == p->color)
+		return;
+
+	ThreadHandler hander={handler_method_setcolor,(int)this,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->color = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+}
 
 

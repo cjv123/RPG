@@ -146,14 +146,14 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 {
 	Window* window = (Window*)par1;
 	window->m_winNode = CCNodeRGBA::create();
-	//window->m_winNode->setCascadeOpacityEnabled(true);
 	SceneMain::getMainLayer()->addChild(window->m_winNode);
 
 	window->m_contentNode = CCNodeRGBA::create();
 	window->m_contentNode->setCascadeColorEnabled(true);
 	window->m_contentNode->setAnchorPoint(ccp(0,0));
-	window->m_contentNode->setPosition(ccp(16,16));
+	window->m_contentNode->setPosition(ccp(-1000,-1000));
 	window->m_contentNode->retain();
+	SceneMain::getMainLayer()->addChild(window->m_contentNode);
 
 	return 0;
 }
@@ -264,16 +264,20 @@ int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 	{
 	case SetPropStruct::x:
 		window->m_winNode->setPositionX(value);
+		window->m_contentNode->setPositionX(value+16);
 		break;
 	case SetPropStruct::y:
 		window->m_winNode->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
+		window->m_contentNode->setPositionY(window->m_winNode->getPositionY()-window->m_winNode->getContentSize().height+16);
 		break;
 	case SetPropStruct::z:
 		//window->m_winNode->setZOrder(window_z_base+value);
 		window->m_winNode->setZOrder(value);
+		window->m_contentNode->setZOrder(value+2);
 		break;
 	case SetPropStruct::visible:
 		window->m_winNode->setVisible((bool)value);
+		window->m_contentNode->setVisible((bool)value);
 		break;
 	case SetPropStruct::opacity:
 		window->m_winNode->setOpacity(value);
@@ -522,19 +526,25 @@ void Window::setVisible(bool value)
 
 int Window::handler_method_release( int ptr1,void* ptr2 )
 {
-	Window* window = (Window*)ptr1;
-	if (window->m_winNode)
+	CCNodeRGBA* winNode = (CCNodeRGBA*)ptr1;
+	CCNodeRGBA* contentNode = (CCNodeRGBA*)ptr2;
+	if (winNode)
 	{
-		window->m_winNode->removeFromParentAndCleanup(true);
-		window->m_winNode = NULL;
+		winNode->removeFromParentAndCleanup(true);
 	}
+
+	if (contentNode)
+	{
+		contentNode->removeFromParentAndCleanup(true);
+	}
+
 	return 0;
 }
 
 
 void Window::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)m_winNode,(void*)m_contentNode};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -590,7 +600,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 
 	CCNodeRGBA* contentNode = window->m_contentNode;
 	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
-	winnode->addChild(contentNode);
+	contentNode->setPosition(ccp(winnode->getPositionX()+16,winnode->getPositionY() - winnode->getContentSize().height+16));
 
 	handler_method_set_content( (int)window,(void*)0 );
 	handler_method_set_cursor_rect((int)window,(void*)0);

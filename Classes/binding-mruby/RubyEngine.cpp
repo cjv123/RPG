@@ -80,7 +80,11 @@ void RubyEngine::initBindingMethod()
 	inputBindingInit(m_mrb);
 	planeBindingInit(m_mrb);
 
-	mrb_load_irep(m_mrb, mrbModuleRPG);
+	//mrb_load_irep(m_mrb, mrbModuleRPG);
+	unsigned long size;
+	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData("rpg.rb","rb",&size);
+	runScript((const char*)data,size);
+	delete [] data;
 	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());
 	mrb_gc_arena_restore(m_mrb, arena);
 }

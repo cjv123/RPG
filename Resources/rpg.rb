@@ -136,7 +136,7 @@ module RPG
     def damage(value, critical)
       dispose_damage
       if value.is_a?(Numeric)
-        damage_string = value.abs.to_s
+        damage_string = Integer(value).abs.to_s
       else
         damage_string = value.to_s
       end

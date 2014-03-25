@@ -171,7 +171,8 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	sprite->m_sprite->setOpacity(sprite->p->opacity);
 	if (sprite->p->color)
 		handler_method_setcolor((int)sprite,NULL);
-
+	sprite->p->srcRect->width = sprite->m_sprite->getContentSize().width;
+	sprite->p->srcRect->height = sprite->m_sprite->getContentSize().height;
 
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
@@ -299,8 +300,8 @@ void Sprite::setX(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->x = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }
@@ -315,8 +316,8 @@ void Sprite::setY(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->y = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }
@@ -344,8 +345,8 @@ void Sprite::setOX(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->ox = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }
@@ -357,8 +358,8 @@ void Sprite::setOY(int value)
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->oy = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }
@@ -492,10 +493,10 @@ void Sprite::setBlendType(int type)
 
 int Sprite::handler_method_release( int ptr1,void* ptr2 )
 {
-	Sprite* sprite = (Sprite*)ptr1;
-	if (sprite->m_sprite)
+	CCSprite* sprite = (CCSprite*)ptr1;
+	if (sprite)
 	{
-		sprite->m_sprite->removeFromParentAndCleanup(true);
+		sprite->removeFromParentAndCleanup(true);
 	}
 	return 0;
 }
@@ -504,7 +505,7 @@ int Sprite::handler_method_release( int ptr1,void* ptr2 )
 /* Disposable */
 void Sprite::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)m_sprite,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -632,11 +633,15 @@ int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
 
 	if (sprite->m_sprite && sprite->p->color)
 	{
-		if ( sprite->p->color->red<255 && sprite->p->color->red>0
-			&& sprite->p->color->green<255 &&  sprite->p->color->green>0
-			&& sprite->p->color->blue<255 && sprite->p->color->blue>0)
+		if ( sprite->p->color->red>0
+			&& sprite->p->color->green>0
+			&& sprite->p->color->blue>0)
 		{
-			sprite->m_sprite->setColor(ccc3(sprite->p->color->red,sprite->p->color->green,sprite->p->color->blue));
+			sprite->m_sprite->setColor(
+				ccc3(sprite->p->color->red*sprite->p->color->alpha/255
+				,sprite->p->color->green*sprite->p->color->alpha/255
+				,sprite->p->color->blue*sprite->p->color->alpha/255)
+				);
 		}
 
 		if((sprite->p->color->red==0 && 
@@ -645,10 +650,9 @@ int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
 			sprite->p->color->alpha==0 )
 		)
 		{
-			sprite->m_sprite->setOpacity(255);
+			sprite->m_sprite->setColor(ccc3(255,255,255));
 		}
-		else
-			sprite->m_sprite->setOpacity(sprite->p->color->alpha);
+		
 		
 	}
 	return 0;

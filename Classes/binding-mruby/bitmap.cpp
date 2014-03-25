@@ -42,8 +42,9 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* image)
 		sp->setContentSize(CCSizeMake(bitmap->m_width,bitmap->m_height));
 	}
 	sp->getTexture()->setAliasTexParameters();
-	bitmap->m_emuBitmap = sp;
 	sp->retain();
+	bitmap->m_emuBitmap = sp;
+	
 	delete ccimage;
 	return 0;
 }
@@ -339,13 +340,15 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
 
 	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),ptr2struct->font->getName(),ptr2struct->font->getSize());
-	if (bitmap->p->font)
+	if (ptr2struct->font)
 	{
 		Font* f = ptr2struct->font; 
 		label->setFontName(f->getName());
 		label->setFontSize(f->getSize());
-		label->setColor(ccc3(f->getColor()->red,f->getColor()->green,f->getColor()->blue));
-		label->setOpacity(f->getColor()->alpha);
+		label->setColor(ccc3(f->getColor()->red*f->getColor()->alpha/255,
+			f->getColor()->green*f->getColor()->alpha/255,
+			f->getColor()->blue*f->getColor()->alpha/255));
+		//label->setOpacity(f->getColor()->alpha);
 	}
 	label->setAnchorPoint(ccp(0,1));
 	label->setDimensions(CCSizeMake(ptr2struct->rect.w,ptr2struct->rect.h));
@@ -366,7 +369,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	masklayer->setBlendFunc(fun);
 
 	fontRender->begin();
-	masklayer->visit();
+	//masklayer->visit();
 	label->visit();
 	fontRender->end();
 	delete ptr2struct;
@@ -463,19 +466,17 @@ void Bitmap::bindTex(ShaderBase &shader)
 
 int Bitmap::handler_method_release( int ptr1,void* ptr2 )
 {
-	Bitmap* bitmap = (Bitmap*)ptr1;
-	
-	if (NULL!=bitmap->m_emuBitmap)
+	CCSprite* emubitmap = (CCSprite*)ptr1;
+	CCRenderTexture* fontRender = (CCRenderTexture*)ptr2;
+
+	if (NULL!=emubitmap)
 	{
-		bitmap->m_emuBitmap->release();
-		//bitmap->m_emuBitmap->removeFromParent();
-		bitmap->m_emuBitmap = NULL;
+		emubitmap->release();
 	}
 
-	if (NULL!=bitmap->m_fontRender)
+	if (NULL!=fontRender)
 	{
-		bitmap->m_fontRender->release();
-		bitmap->m_fontRender = NULL;
+		fontRender->release();
 	}
 
 	return 0;
@@ -483,7 +484,7 @@ int Bitmap::handler_method_release( int ptr1,void* ptr2 )
 
 void Bitmap::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)m_emuBitmap,(void*)m_fontRender};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);

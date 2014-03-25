@@ -16,7 +16,7 @@ struct BitmapPrivate
 
 	~BitmapPrivate()
 	{
-		
+
 	}
 };
 
@@ -66,13 +66,14 @@ Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL),m_fontRender(0)
 
 	if (ret)
 	{
-		m_width = image->getWidth();
-		m_height = image->getHeight();
 		ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)image};
 		pthread_mutex_lock(&s_thread_handler_mutex);
+		m_filename = filename;
+		m_width = image->getWidth();
+		m_height = image->getHeight();
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
-		m_filename = filename;
+		
 	}
 
 
@@ -337,7 +338,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
 
-	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),FontPrivate::defaultName.c_str(),FontPrivate::defaultSize);
+	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),ptr2struct->font->getName(),ptr2struct->font->getSize());
 	if (bitmap->p->font)
 	{
 		Font* f = ptr2struct->font; 
@@ -371,6 +372,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	delete ptr2struct;
 	return 0;
 }
+
 
 void Bitmap::drawText(const IntRect &rect, const char *str, int align)
 {

@@ -55,7 +55,7 @@ struct SpritePrivate
 	      bushOpacity(128),
 	      opacity(255),
 	      blendType(BlendNormal),
-	      isVisible(false),
+	      isVisible(true),
 	      color(&tmp.color),
 	      tone(&tmp.tone),
 		  viewport(0),x(0),y(0),z(0),ox(0),oy(0),zx(0),zy(0),angle(0)
@@ -149,7 +149,12 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		sprite->m_sprite = CCSprite::create();
 	sprite->m_sprite->setAnchorPoint(ccp(0,1));
 	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
-	sprite->m_sprite->setZOrder(sprite->p->z);
+	if (sprite->p->z)
+		sprite->m_sprite->setZOrder(sprite->p->z);
+	if (!sprite->p->isVisible)
+		sprite->m_sprite->setVisible(sprite->p->isVisible);
+
+	sprite->m_sprite->setOpacity(sprite->p->opacity);
 
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
@@ -221,7 +226,7 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 		return -1;
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
-	
+
 	if (sprite->m_sprite)
 	{
 		CCSprite* emubitmap = sprite->m_sprite;
@@ -269,6 +274,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 
 void Sprite::setX(int value)
 {
+	if (value == p->x)
+		return;
+
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::x;
 	ptr2->value = value;
@@ -282,6 +290,9 @@ void Sprite::setX(int value)
 
 void Sprite::setY(int value)
 {
+	if (p->y == value)
+		return;
+	
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::y;
 	ptr2->value = value;
@@ -296,9 +307,7 @@ void Sprite::setY(int value)
 void Sprite::setZ(int value)
 {
 	if (p->z == value)
-	{
 		return;
-	}
 
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::z;
@@ -378,13 +387,16 @@ void Sprite::setAngle(float value)
 
 void Sprite::setVisible(bool value)
 {
+	if(value == p->isVisible)
+		return;
+
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::visible;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	p->isVisible = value;
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }
@@ -425,13 +437,21 @@ int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 
 void Sprite::setOpacity(int value)
 {
+	if(value == p->opacity)
+		return;
+	int v = value;
+	if (v>255)
+		v = 255;
+	if (v<0)
+		v = 0;
+
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::opacity;
-	ptr2->value = value;
+	ptr2->value = v;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->opacity = v;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
-	p->opacity = value;
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
 }

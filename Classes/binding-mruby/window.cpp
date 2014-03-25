@@ -130,7 +130,7 @@ struct WindowPrivate
 	      baseVertDirty(true),
 	      opacityDirty(true),
 	      baseTexDirty(true),
-		  visible(true)
+		  visible(true),z(0)
 	{
 		
 	}
@@ -227,7 +227,8 @@ int Window::handler_method_set_content( int ptr1,void* ptr2 )
 		content && content->getEmuBitmap())
 	{
 		CCSprite* contentsp = content->getEmuBitmap();
-		window->m_contentNode->addChild(contentsp);
+		if (!contentsp->getParent())
+			window->m_contentNode->addChild(contentsp);
 		contentsp->setAnchorPoint(ccp(0,1));
 		contentsp->setPosition(ccp(0,rgss_y_to_cocos_y(0,window->m_contentNode->getContentSize().height)));
 	}
@@ -268,7 +269,8 @@ int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 		window->m_winNode->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
 		break;
 	case SetPropStruct::z:
-		window->m_winNode->setZOrder(window_z_base+value);
+		//window->m_winNode->setZOrder(window_z_base+value);
+		window->m_winNode->setZOrder(value);
 		break;
 	case SetPropStruct::visible:
 		window->m_winNode->setVisible((bool)value);
@@ -492,12 +494,15 @@ void Window::draw()
 
 void Window::setZ(int value)
 {
-	p->z = value;
+	if (value == p->z)
+		return;
+
 	SetPropStruct* ptr2 = new SetPropStruct;
 	ptr2->prop_type = SetPropStruct::z;
 	ptr2->value = value;
 	ThreadHandler hander={handler_method_set_prop,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->z = value;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }

@@ -187,7 +187,21 @@ void RubyEngine::initRMXPScript( const char* filename )
 // 		fwrite(decodeBuffer.c_str(),sizeof(char),decodeBuffer.size(),f);
 // 		fclose(f);
 	}
+
 	delete [] data;
+
+	//mruby的until 循环有问题 替换一下写法
+	for (int i=0;i<m_RMXPScripts.size();i++)
+	{
+		if (m_RMXPScripts[i].name == "Scene_Battle 3")
+		{
+			string& script = m_RMXPScripts[i].script;
+			char findstr[]="end until @active_battler.inputable?";
+			int pos = script.find(findstr);
+			script.replace(pos,strlen(findstr),"break if @active_battler.inputable?\nend until false");
+			return;
+		}
+	}
 }
 
 static pthread_t s_networkThread;

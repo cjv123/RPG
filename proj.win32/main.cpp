@@ -20,6 +20,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     AppDelegate app;
     CCEGLView* eglView = CCEGLView::sharedOpenGLView();
     eglView->setViewName("RMXP_runner");
-    eglView->setFrameSize(640, 480);
+    eglView->setFrameSize(854,480);
+	//eglView->setFrameZoomFactor(0.7);
     return CCApplication::sharedApplication()->run();
 }

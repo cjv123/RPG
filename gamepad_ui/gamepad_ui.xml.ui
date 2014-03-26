@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<UIProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <filePath>E:\workspace\cocos2d-x-2.2.1\projects\RMXP_runner\gamepad_ui\gamepad_ui.xml.ui</filePath>
+  <Version>1.2.0.1</Version>
+  <Name>gamepad_ui</Name>
+  <ProjectDir>E:\workspace\cocos2d-x-2.2.1\projects\RMXP_runner\gamepad_ui</ProjectDir>
+  <JsonFileName>gamepad_ui.json</JsonFileName>
+  <Resources>E:\workspace\cocos2d-x-2.2.1\projects\RMXP_runner\gamepad_ui\Resources</Resources>
+  <JsonFolder>E:\workspace\cocos2d-x-2.2.1\projects\RMXP_runner\gamepad_ui\Json</JsonFolder>
+  <JsonList>
+    <string>gamepad_ui_1.json</string>
+  </JsonList>
+  <imageFileList>
+    <string>gamepad_ui0.plist</string>
+  </imageFileList>
+  <JsonSuffix>.json</JsonSuffix>
+  <CurrentUIJson>gamepad_ui_1.json</CurrentUIJson>
+  <CanvasSize>
+    <Width>854</Width>
+    <Height>480</Height>
+  </CanvasSize>
+</UIProject>

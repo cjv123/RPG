@@ -41,6 +41,9 @@ void Input::update()
 		}
 		m_buttonCodeList.pop_back();
 	}
+	else
+		m_lastButtonCode = None;
+
 	pthread_mutex_unlock(&s_input_codelist_mutex);
 }
 
@@ -79,8 +82,9 @@ bool Input::isRepeated(int button)
 		return false;
 	Button_Status_Type status = it->second;
 
-	if (status == Button_State_Just_Down)
+	if (m_lastButtonCode!=it->first && status == Button_State_Just_Down)
 	{
+		m_lastButtonCode = it->first;
 		return true;
 	}
 	return false;
@@ -97,7 +101,7 @@ int Input::mouseY()
 	return 0;
 }
 
-Input::Input()
+Input::Input() : m_lastButtonCode(None)
 {
 	pthread_mutex_init(&s_input_codelist_mutex, NULL);
 

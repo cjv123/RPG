@@ -4,6 +4,7 @@
 #include <cocos2d.h>
 using namespace cocos2d;
 #include "binding-mruby/RubyEngine.h"
+#include "GamePad.h"
 
 class SceneMain : public CCLayer
 {
@@ -15,6 +16,9 @@ public:
 protected:
 	RubyEngine* m_engine;
 	virtual void update(float delta);
+	void updateGamePad(float delta);
+
+	int m_lastkey;
 };
 
 #endif

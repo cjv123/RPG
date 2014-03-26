@@ -1,6 +1,7 @@
 APPNAME="RMXP_runner"
 
 # options
+NDK_ROOT="E:\Android\android-ndk-r8d"
 
 buildexternalsfromsource=
 

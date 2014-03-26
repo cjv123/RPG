@@ -1,44 +1,145 @@
 #include "binding-util.h"
 #include "exception.h"
 
+#include <string>
+using namespace std;
+#include "ThreadHandlerManager.h"
+#include <cocos2d.h>
+using namespace cocos2d;
+#include "SceneMain.h"
+
 #ifdef WIN32
 #include <Windows.h>
 #endif
 
+
+static int g_frame_rate=60;
+static int g_frame_count;
+static int g_fullscreen;
+static int g_showcurrsor;
+
+static int g_stop = 0;
+
+static void graphic_sleep(float delay)
+{
+#ifdef WIN32
+	Sleep(delay);
+#else
+	usleep(delay*1000);
+#endif 
+}
+
 MRB_FUNCTION(graphicsUpdate)
 {
 	MRB_FUN_UNUSED_PARAM;
-#ifdef WIN32
-	Sleep(1000/60);
-#else
-	sleep(1000/60);
-#endif 
+
+	if (g_stop)
+	{
+		while(g_stop)
+		{
+			graphic_sleep(10.0f);
+		}
+	}
+	else
+		graphic_sleep(1000.0f/g_frame_rate);
+
+	//CCLOG("graphicsupdte");
+
 	return mrb_nil_value();
 }
 
 MRB_FUNCTION(graphicsFreeze)
 {
 	MRB_FUN_UNUSED_PARAM;
-
+	g_stop = 1;
 
 	return mrb_nil_value();
 }
 
+struct TranstionPtrs 
+{
+	int duration;
+	string filename;
+	int vague;
+};
+
+extern pthread_mutex_t s_thread_handler_mutex;
+
+class TransCallBack : public CCObject
+{
+public:
+	void onTransComplete()
+	{
+		g_stop = 0;
+	}
+};
+
+static int handler_method_graphicsTransition(int ptr1,void* ptr2)
+{
+	TranstionPtrs* ptr = (TranstionPtrs*)ptr1;
+
+	if (ptr->filename=="")
+	{
+		CCLayerColor* layer = CCLayerColor::create(ccc4(0,0,0,255));
+		layer->setContentSize(SceneMain::getMainLayer()->getContentSize());
+		SceneMain::getMainLayer()->addChild(layer,5000);
+		float delay = ptr->duration*1.0f/g_frame_rate;
+		TransCallBack* callback = new TransCallBack;
+		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),NULL);
+		layer->runAction(seq);
+	}
+	else
+	{
+		string path = ptr->filename + ".png";
+		CCSprite* sp = CCSprite::create(path.c_str());
+		if (!sp)
+			return -1;
+		sp->setAnchorPoint(ccp(0,0));
+		SceneMain::getMainLayer()->addChild(sp,5000);
+		float delay = ptr->duration*1.0f/g_frame_rate;
+		TransCallBack* callback = new TransCallBack;
+		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),NULL);
+		sp->runAction(seq);
+	}
+
+	delete ptr;
+	return 0;
+}
+
 MRB_FUNCTION(graphicsTransition)
 {
+	mrb_int duration=8,vague=40;
+	char* filename=NULL;
+
+	if (mrb->c->ci->argc==1)
+		mrb_get_args(mrb, "i", &duration);
+	else if (mrb->c->ci->argc == 2)
+		mrb_get_args(mrb, "iz", &duration,&filename);
+	else if (mrb->c->ci->argc == 3)
+		mrb_get_args(mrb, "izi", &duration,&filename,&vague);
+	
+
+	TranstionPtrs* ptr = new TranstionPtrs;
+	ptr->duration = duration;
+	if (filename)
+		ptr->filename = filename;
+	ptr->vague = vague;
+
+	ThreadHandler hander={handler_method_graphicsTransition,(int)ptr,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,NULL);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
+
 	return mrb_nil_value();
 }
 
 MRB_FUNCTION(graphicsFrameReset)
 {
 
+
 	return mrb_nil_value();
 }
 
-static int g_frame_rate=60;
-static int g_frame_count;
-static int g_fullscreen;
-static int g_showcurrsor;
 
 MRB_FUNCTION(graphicsGetFrameRate)
 {

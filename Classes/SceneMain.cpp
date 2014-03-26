@@ -6,6 +6,8 @@
 
 extern pthread_mutex_t s_input_codelist_mutex;
 
+static GamePad* g_gamepad=NULL;
+
 #ifdef WIN32
 static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 {
@@ -51,9 +53,18 @@ static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 CCScene* SceneMain::scene()
 {
 	CCScene *scene = CCScene::create();
+	g_gamepad = GamePad::create();
+	scene->addChild(g_gamepad,10);
+
 	SceneMain* layer = SceneMain::create();
 	scene->addChild(layer);
+	CCSize sceneSize = scene->getContentSize();
 	layer->setTag(MAIN_LAYER_TAG);
+	layer->setContentSize(CCSizeMake(640,480));
+	layer->setScale(min(sceneSize.width/layer->getContentSize().width,
+		sceneSize.height/layer->getContentSize().height));
+	layer->setPosition(ccp(sceneSize.width/2 - layer->getContentSize().width/2,sceneSize.height/2-layer->getContentSize().height/2));
+
 	return scene;
 }
 
@@ -64,6 +75,9 @@ bool SceneMain::init()
 	{
 		return false;
 	}
+
+	m_lastkey = 0;
+
 #ifdef WIN32
 	CCEGLView::sharedOpenGLView()->setAccelerometerKeyHook(key_handler);
 #endif
@@ -85,6 +99,13 @@ void SceneMain::update( float delta )
 {
 	if (!m_engine->getRunRMXP())
 		m_engine->runRMXPScript();
+
+	if(g_gamepad)
+	{
+		updateGamePad(delta);
+		g_gamepad->update(delta);
+	}
+
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->update(delta);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -94,5 +115,97 @@ CCLayer* SceneMain::getMainLayer()
 {
 	CCLayer* mainlayer = dynamic_cast<CCLayer*>(CCDirector::sharedDirector()->getRunningScene()->getChildByTag(MAIN_LAYER_TAG));
 	return mainlayer;
+}
+
+static int timer_key_sleep = 0;
+void SceneMain::updateGamePad( float delta )
+{
+	Input::ButtonListStruct info={Input::None,0};
+	if (g_gamepad->isPress(GamePad::Button_Up))
+	{
+		info.code = Input::Up;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isPress(GamePad::Button_Down))
+	{
+		info.code = Input::Down;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isPress(GamePad::Button_Left))
+	{
+		info.code = Input::Left;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isPress(GamePad::Button_Right))
+	{
+		info.code = Input::Right;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Up))
+	{
+		info.code = Input::Up;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Down))
+	{
+		info.code = Input::Down;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Left))
+	{
+		info.code = Input::Left;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Right))
+	{
+		info.code = Input::Right;
+	}
+	
+	if (g_gamepad->isPress(GamePad::Button_Back))
+	{
+		info.code = Input::B;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Back))
+	{
+		info.code = Input::B;
+	}
+	else if (g_gamepad->isPress(GamePad::Button_Menu))
+	{
+		info.code = Input::C;
+		info.isDown =1;
+	}
+	else if (g_gamepad->isJustPress(GamePad::Button_Menu))
+	{
+		info.code = Input::C;
+	}
+
+	if(timer_key_sleep)
+		timer_key_sleep++;
+	if(timer_key_sleep>30)
+		timer_key_sleep = 0;
+
+	if (info.code!=Input::None)
+	{
+		if(info.isDown)
+		{
+			if (m_lastkey == (int)info.code)
+			{
+				if(!timer_key_sleep)
+					timer_key_sleep++;
+
+				if (timer_key_sleep<30)
+					return;
+			}
+			m_lastkey = (int)info.code;
+		}
+		else
+		{
+			if (m_lastkey == (int)info.code)
+				m_lastkey = 0;
+		}
+
+		pthread_mutex_lock(&s_input_codelist_mutex);
+		Input::getInstance()->pushkey(info);
+		pthread_mutex_unlock(&s_input_codelist_mutex);
+	}
+	
 }
 

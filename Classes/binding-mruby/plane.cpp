@@ -7,7 +7,6 @@
 #include "sprite.h"
 #include "SceneMain.h"
 
-
 struct PlanePrivate
 {
 	Bitmap *bitmap;

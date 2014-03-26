@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include "viewport.h"
 
 enum CommonSymbol
 {
@@ -373,9 +374,10 @@ objectLoad(mrb_state *mrb, mrb_value self, const mrb_data_type &type)
 	return obj_value;
 }
 
-template<class C>
-static C *
-	viewportElementInitialize(mrb_state *mrb, mrb_value self)
+extern const mrb_data_type ViewportType;
+
+template<class C> 
+C * viewportElementInitialize(mrb_state *mrb, mrb_value self)
 {
 	/* Get parameters */
 	mrb_value viewportObj = mrb_nil_value();

@@ -61,6 +61,8 @@ private:
 	Button_State_Map_Type m_buttonStateMap;
 	
 	list<ButtonListStruct> m_buttonCodeList;
+
+	ButtonCode m_lastButtonCode;
 };
 
 #endif // INPUT_H

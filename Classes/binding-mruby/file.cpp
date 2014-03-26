@@ -86,13 +86,9 @@ MRB_FUNCTION(fileOpen)
 	mrb_value block = mrb_nil_value();
 
 	mrb_get_args(mrb, "S|z&", &path, &mode, &block);
+	
 
-
-	mrb_value obj;
-	setProperty(mrb, obj, CSpath, path);
-
-
-	return obj;
+	return mrb_nil_value();
 }
 
 MRB_FUNCTION(fileRename)
@@ -242,7 +238,7 @@ MRB_METHOD(fileGetMtime)
 {
 	mrb_value path = getProperty(mrb, self, CSpath);
 
-	struct stat fileStat;
+	//struct stat fileStat;
 
 	return mrb_nil_value();
 }
@@ -267,26 +263,26 @@ MRB_FUNCTION(fileTestDoesExist)
 
 MRB_FUNCTION(fileTestIsFile)
 {
-	struct stat fileStat;
-	getFileStat(mrb, fileStat);
+	//struct stat fileStat;
+	//getFileStat(mrb, fileStat);
 
 	return mrb_bool_value(true);
 }
 
 MRB_FUNCTION(fileTestIsDirectory)
 {
-	struct stat fileStat;
-	getFileStat(mrb, fileStat);
+//	struct stat fileStat;
+	//getFileStat(mrb, fileStat);
 
 	return mrb_bool_value(true);
 }
 
 MRB_FUNCTION(fileTestSize)
 {
-	struct stat fileStat;
-	getFileStat(mrb, fileStat);
+	//struct stat fileStat;
+	//getFileStat(mrb, fileStat);
 
-	return mrb_fixnum_value(fileStat.st_size);
+	return mrb_fixnum_value(0);
 }
 
 void fileBindingInit(mrb_state *mrb)

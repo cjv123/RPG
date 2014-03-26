@@ -9,9 +9,12 @@
 #include <cassert>
 #include <cstdlib>
 #include <algorithm>
+#include <string>
 
+#ifdef WIN32
 #define and &&
 #define not !
+#endif
 
 bool operator==(mrb_value const& lhs, mrb_sym const sym) {
   return mrb_symbol(lhs) == sym;
@@ -115,7 +118,7 @@ struct write_context : public utility {
     return mrb_str_buf_cat(M, out, str, len), *this;
   }
   write_context& string(char const* str)
-  { return string(str, std::strlen(str)); }
+  { return string(str, strlen(str)); }
   write_context& string(mrb_sym const sym) {
     size_t len;
     char const* const str = mrb_sym2name_len(M, sym, &len);
@@ -442,7 +445,7 @@ mrb_value read_context::marshal() {
 
     case 'f': { // float
       mrb_value const str = string();
-      ret = mrb_float_value(M, std::strtod(RSTRING_PTR(str), NULL));
+      ret = mrb_float_value(M, strtod(RSTRING_PTR(str), NULL));
       break;
     }
 

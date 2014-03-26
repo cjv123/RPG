@@ -118,7 +118,7 @@ void RubyEngine::showExcMessageBox(mrb_value exc)
 	snprintf(msgBoxText, 512, "Script '%s' line %d: %s occured.\n%s\n",
 		mrbValueString(file), mrb_fixnum(line), excClass, mrbValueString(mesg));
 
-	printf(msgBoxText);
+	CCLOG(msgBoxText);
 }
 
 void RubyEngine::runScript(const char* script,int len/*=0*/ )
@@ -194,15 +194,22 @@ void RubyEngine::initRMXPScript( const char* filename )
 
 	delete [] data;
 
-	//mruby的until 循环有问题 替换一下写法
+	//mruby的语法可能不兼容的地方 只能替换一下写法
 	for (int i=0;i<m_RMXPScripts.size();i++)
 	{
 		if (m_RMXPScripts[i].name == "Scene_Battle 3")
 		{
 			string& script = m_RMXPScripts[i].script;
-			char findstr[]="end until @active_battler.inputable?";
-			int pos = script.find(findstr);
-			script.replace(pos,strlen(findstr),"break if @active_battler.inputable?\nend until false");
+			string findstr="end until @active_battler.inputable?";
+			int pos = script.find(findstr.c_str());
+			if (pos!=-1)
+				script.replace(pos,strlen(findstr.c_str()),"break if @active_battler.inputable?\nend until false");
+
+			findstr="unless $game_party.item_can_use?(@item.id)";
+			pos = script.find(findstr.c_str());
+			if (pos!=-1)
+				script.replace(pos,strlen(findstr.c_str()),"unless @item!=nil and $game_party.item_can_use?(@item.id)");
+
 			return;
 		}
 	}
@@ -226,7 +233,6 @@ void* RubyEngine::networkThread( void* data )
 	int script_cout = engine->m_RMXPScripts.size();
 	for (int i=0;i<script_cout;i++)
 	{
-		//printf("run script name:%s\n",engine->m_RMXPScripts[i].name.c_str());
 		int ai = mrb_gc_arena_save(engine->m_mrb);
 		engine->runScript(engine->m_RMXPScripts[i].script.c_str());
 		mrb_gc_arena_restore(engine->m_mrb, ai);

@@ -32,6 +32,7 @@ extern void timeBindingInit(mrb_state* mrb);
 extern void fileBindingInit(mrb_state* mrb);
 extern void inputBindingInit(mrb_state* mrb);
 extern void planeBindingInit(mrb_state *mrb);
+extern void marshalBindingInit(mrb_state *mrb);
 
 static const char * mrbValueString(mrb_value value)
 {
@@ -62,7 +63,8 @@ void RubyEngine::initBindingMethod()
 {
 	int arena = mrb_gc_arena_save(m_mrb);
 
-	mrb_mruby_marshal_gem_init(m_mrb);
+	//mrb_mruby_marshal_gem_init(m_mrb);
+	marshalBindingInit(m_mrb);
 	kernelBindingInit(m_mrb);
 	etcBindingInit(m_mrb);
 	tableBindingInit(m_mrb);
@@ -137,7 +139,7 @@ void RubyEngine::initRMXPScript( const char* filename )
 {
 	unsigned long size;
 	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filename,"rb",&size);
-	mrb_value mrb_arr = mrb_marshal_load(m_mrb,(char*)data,size);
+	mrb_value mrb_arr = marshalLoadInt(m_mrb,(char*)data,size);
 	int arrlen = RARRAY_LEN(mrb_arr);
 	for (int i=0;i<arrlen;i++)
 	{

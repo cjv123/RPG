@@ -1,4 +1,5 @@
 #include "binding-util.h"
+#include "file.h"
 #include <mruby/string.h>
 #include <mruby/array.h>
 #include <mruby/class.h>
@@ -11,6 +12,7 @@ using namespace std;
 #include <cocos2d.h>
 using namespace cocos2d;
 
+DEF_TYPE(File);
 
 /* File class methods */
 MRB_FUNCTION(fileBasename)
@@ -86,9 +88,17 @@ MRB_FUNCTION(fileOpen)
 	mrb_value block = mrb_nil_value();
 
 	mrb_get_args(mrb, "S|z&", &path, &mode, &block);
-	
+	File* p = new File;
+	p->Open(RSTRING_PTR(path),mode);
+	mrb_value obj = wrapObject(mrb, p, FileType);
 
-	return mrb_nil_value();
+	if (mrb_type(block) == MRB_TT_PROC)
+	{
+		mrb_value ret = mrb_yield(mrb, block, obj);
+		p->close();
+	}
+
+	return obj;
 }
 
 MRB_FUNCTION(fileRename)
@@ -110,7 +120,9 @@ MRB_FUNCTION(mrbNoop)
 /* File instance methods */
 MRB_METHOD(fileClose)
 {
-	return self;
+	File *fileimpl = getPrivateData<File>(mrb, self);
+	fileimpl->close();
+	return mrb_nil_value();
 }
 
 static void
@@ -182,15 +194,16 @@ MRB_METHOD(fileGetPos)
 
 MRB_METHOD(fileRead)
 {
+	File *fileimpl = getPrivateData<File>(mrb, self);
 
-
-	long cur, size;
-
-	mrb_int length = size - cur;
+	mrb_int length = 0;
 	mrb_get_args(mrb, "|i", &length);
 
 	mrb_value str = mrb_str_new(mrb, 0, 0);
 	mrb_str_resize(mrb, str, length);
+
+	char* data = RSTRING_PTR(str);
+	size_t count = fileimpl->read((unsigned char*)data,(length==0)?RSTRING_LEN(str):length);
 
 	return str;
 }
@@ -211,11 +224,13 @@ MRB_METHOD(fileReadLines)
 
 MRB_METHOD(fileWrite)
 {
+	File *fileimpl = getPrivateData<File>(mrb, self);
 
 	mrb_value str;
 	mrb_get_args(mrb, "S", &str);
 
-	size_t count;
+	char* data = RSTRING_PTR(str);
+	size_t count = fileimpl->write((unsigned char*)data,RSTRING_LEN(str));
 
 	return mrb_fixnum_value(count);
 }
@@ -236,11 +251,11 @@ getFileStat(mrb_state *mrb, struct stat &fileStat)
 
 MRB_METHOD(fileGetMtime)
 {
-	mrb_value path = getProperty(mrb, self, CSpath);
+	
 
 	//struct stat fileStat;
 
-	return mrb_nil_value();
+	return mrb_fixnum_value(0);
 }
 
 /* FileTest module functions */
@@ -323,3 +338,46 @@ void fileBindingInit(mrb_state *mrb)
 	mrb_define_module_function(mrb, module, "file?", fileTestIsFile, MRB_ARGS_REQ(1));
 	mrb_define_module_function(mrb, module, "size", fileTestSize, MRB_ARGS_REQ(1));
 }
+
+File::File() : m_fp(NULL)
+{
+
+}
+
+File::~File()
+{
+
+}
+
+FILE* File::Open( const char* filename,const char* mode )
+{
+	string path = CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
+	m_fp = fopen(path.c_str(),mode);
+	return m_fp;
+}
+
+int File::write( unsigned char* data,unsigned long len )
+{
+	if (!m_fp)
+		return -1;
+
+	return fwrite(data,sizeof(char),len,m_fp);
+}
+
+int File::read( unsigned char* data,unsigned long len )
+{
+	if (!m_fp)
+		return -1;
+
+	return fread(data,sizeof(char),len,m_fp);
+}
+
+void File::close()
+{
+	if (m_fp)
+	{
+		fclose(m_fp);
+	}
+}
+
+

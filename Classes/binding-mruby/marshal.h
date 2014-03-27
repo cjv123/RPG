@@ -1,9 +1,11 @@
-#ifndef _MARSHAL_H
-#define _MARSHAL_H
 
-extern "C"
-void mrb_mruby_marshal_gem_init(mrb_state* M);
+#ifndef MARSHAL_H
+#define MARSHAL_H
 
-mrb_value mrb_marshal_load(mrb_state* M, char* str,long len);
+#include <mruby.h>
 
-#endif
+void marshalDumpInt(mrb_state *, char *, mrb_value);
+mrb_value marshalLoadInt(mrb_state *, char *);
+mrb_value marshalLoadInt(mrb_state *, char *,unsigned long len);
+
+#endif // MARSHAL_H

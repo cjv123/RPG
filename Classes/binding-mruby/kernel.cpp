@@ -156,7 +156,7 @@ MRB_FUNCTION(kernelLoadData)
 
 	unsigned long size;
 	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(),"rb",&size);
-	mrb_value ret = mrb_marshal_load(mrb,(char*)data,size);
+	mrb_value ret = marshalLoadInt(mrb,(char*)data,size);
 	delete [] data;
 
 	return ret;

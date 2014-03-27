@@ -143,7 +143,7 @@ MRB_FUNCTION(graphicsFrameReset)
 
 MRB_FUNCTION(graphicsGetFrameRate)
 {
-	return mrb_float_value(mrb,g_frame_rate);
+	return mrb_fixnum_value(g_frame_rate);
 }
 MRB_FUNCTION(graphicsSetFrameRate)
 {

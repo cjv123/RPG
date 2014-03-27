@@ -191,5 +191,8 @@
     <ClInclude Include="..\Classes\GamePad.h">
       <Filter>Classes</Filter>
     </ClInclude>
+    <ClInclude Include="..\Classes\binding-mruby\file.h">
+      <Filter>Classes\Binding-mruby</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

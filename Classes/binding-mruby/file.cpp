@@ -249,13 +249,27 @@ getFileStat(mrb_state *mrb, struct stat &fileStat)
 
 }
 
+extern mrb_value timeFromSecondsInt(mrb_state *mrb, time_t seconds);
 MRB_METHOD(fileGetMtime)
 {
-	
+	File *fileimpl = getPrivateData<File>(mrb, self);
 
-	//struct stat fileStat;
+#ifdef _WIN32
+	WIN32_FIND_DATA ffd ;
+	HANDLE hFind = FindFirstFile(fileimpl->getPath().c_str(),&ffd);
+	SYSTEMTIME st,stLocal;
+	FileTimeToSystemTime(&(ffd.ftLastWriteTime), &st);
+	SystemTimeToTzSpecificLocalTime(NULL, &st, &stLocal);
+	struct tm gm = {stLocal.wSecond, stLocal.wMinute, stLocal.wHour, stLocal.wDay, stLocal.wMonth-1, stLocal.wYear-1900, stLocal.wDayOfWeek, 0, 0};
+	time_t sec = mktime(&gm);
 
-	return mrb_fixnum_value(0);
+	return timeFromSecondsInt(mrb, sec);
+#else
+	struct stat fileStat;
+	stat(fileimpl->getPath().c_str(), &fileStat);
+
+	return timeFromSecondsInt(mrb, fileStat.st_mtim.tv_sec);
+#endif
 }
 
 /* FileTest module functions */
@@ -353,6 +367,7 @@ FILE* File::Open( const char* filename,const char* mode )
 {
 	string path = CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
 	m_fp = fopen(path.c_str(),mode);
+	m_path = path;
 	return m_fp;
 }
 

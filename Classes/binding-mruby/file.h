@@ -10,8 +10,14 @@ public:
 	int write(unsigned char* data,unsigned long len);
 	int read(unsigned char* data,unsigned long len);
 	void close();
+
+	string getPath()
+	{
+		return m_path;
+	}
 private:
 	FILE* m_fp;
+	string m_path;
 };
 
 DECL_TYPE(File);

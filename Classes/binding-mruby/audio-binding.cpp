@@ -1,5 +1,94 @@
 #include "binding-util.h"
 #include "exception.h"
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
+
+static string getSoundFilename(const char* path)
+{
+	string filename = string(path) + ".mid";
+	FILE* fp = fopen(filename.c_str(),"rb");
+	if (fp)
+	{
+		fclose(fp);
+		return filename;
+	}
+
+	filename = string(path) + ".ogg";
+	fp = fopen(filename.c_str(),"rb");
+	if (fp)
+	{
+		fclose(fp);
+		return filename;
+	}
+
+	filename = string(path) + ".mp3";
+	fp = fopen(filename.c_str(),"rb");
+	if (fp)
+	{
+		fclose(fp);
+		return filename;
+	}
+	
+}
+
+static int g_gbs_id = 0;
+static int g_se_id = 0;
+static int g_me_id = 0;
+
+static void play_bgm_sound(const char* path)
+{
+	string filename = getSoundFilename(path);
+	SimpleAudioEngine::sharedEngine()->playBackgroundMusic(filename.c_str(),true);
+}
+
+static void play_bgs_sound(const char* path)
+{
+	string filename = getSoundFilename(path);
+	if (g_gbs_id)
+		SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
+	g_gbs_id =SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str(),true);
+}
+
+static void play_se_sound(const char* path)
+{
+	string filename = getSoundFilename(path);
+	if (g_se_id)
+		SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
+	g_se_id = SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str());
+}
+
+static void play_me_sound(const char* path)
+{
+	string filename = getSoundFilename(path);
+	if (g_me_id)
+		SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
+	g_me_id = SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str());
+}
+
+static void stop_bgm_sound()
+{
+	if (SimpleAudioEngine::sharedEngine()->isBackgroundMusicPlaying())
+		SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
+}
+
+static void stop_bgs_sound()
+{
+	if(g_gbs_id)
+		SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
+}
+
+static void stop_se_sound()
+{
+	if (g_se_id)
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
+}
+
+static void stop_me_sound()
+{
+	if (g_me_id)
+		SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
+}
+
 
 #define DEF_PLAY_STOP(entity) \
 	MRB_FUNCTION(audio_##entity##Play) \
@@ -8,11 +97,13 @@
 		mrb_int volume = 100; \
 		mrb_int pitch = 100; \
 		mrb_get_args(mrb, "z|ii", &filename, &volume, &pitch); \
+		play_##entity##_sound(filename); \
 		return mrb_nil_value(); \
 	} \
 	MRB_FUNCTION(audio_##entity##Stop) \
 	{ \
 		MRB_FUN_UNUSED_PARAM; \
+		stop_##entity##_sound(); \
 		return mrb_nil_value(); \
 	}
 

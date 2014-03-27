@@ -114,11 +114,11 @@
     <ClCompile Include="..\Classes\binding-mruby\plane-binding.cpp">
       <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\binding-mruby\disposable.cpp">
-      <Filter>Classes\Binding-mruby</Filter>
-    </ClCompile>
     <ClCompile Include="..\Classes\GamePad.cpp">
       <Filter>Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\binding-mruby\disposable.cpp">
+      <Filter>Classes\Binding-mruby</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -190,9 +190,6 @@
     </ClInclude>
     <ClInclude Include="..\Classes\GamePad.h">
       <Filter>Classes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\binding-mruby\file.h">
-      <Filter>Classes\Binding-mruby</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

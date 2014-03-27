@@ -13,8 +13,9 @@ using namespace cocos2d;
 #endif
 
 
-static int g_frame_rate=60;
-static int g_frame_count;
+static int g_frame_rate=40;
+static unsigned long g_frame_count=0;
+static const unsigned long g_frame_count_max = 0xffffffffffffffff;
 static int g_fullscreen;
 static int g_showcurrsor;
 
@@ -41,10 +42,11 @@ MRB_FUNCTION(graphicsUpdate)
 		}
 	}
 	else
+	{
 		graphic_sleep(1000.0f/g_frame_rate);
-
-	//CCLOG("graphicsupdte");
-
+		if (g_frame_count < g_frame_count_max)
+			g_frame_count++;
+	}
 	return mrb_nil_value();
 }
 
@@ -136,7 +138,6 @@ MRB_FUNCTION(graphicsTransition)
 MRB_FUNCTION(graphicsFrameReset)
 {
 
-
 	return mrb_nil_value();
 }
 
@@ -155,7 +156,7 @@ MRB_FUNCTION(graphicsSetFrameRate)
 
 MRB_FUNCTION(graphicsGetFrameCount)
 {
-	return mrb_float_value(mrb,g_frame_count);
+	return mrb_fixnum_value(g_frame_count);
 }
 MRB_FUNCTION(graphicsSetFrameCount)
 {

@@ -27,13 +27,15 @@ timeFromSecondsInt(mrb_state *mrb, time_t seconds)
 {
 	TimeImpl *p = new TimeImpl;
 
+	const time_t tt = seconds;
 	p->_tv.tv_sec = seconds;
-	//p->_tm = *localtime(&p->_tv.tv_sec);
+	p->_tm = *localtime(&tt);
 
 	mrb_value obj = wrapObject(mrb, p, TimeType);
 
 	return obj;
 }
+
 
 MRB_FUNCTION(timeAt)
 {
@@ -47,8 +49,9 @@ MRB_FUNCTION(timeNow)
 {
 	TimeImpl *p = new TimeImpl;
 
-//	gettimeofday(&p->_tv, 0);
-//	p->_tm = *localtime(&p->_tv.tv_sec);
+	const time_t tt = p->_tv.tv_sec;
+	gettimeofday(&p->_tv, 0);
+	p->_tm = *localtime(&tt);
 
 	mrb_value obj = wrapObject(mrb, p, TimeType);
 
@@ -60,9 +63,10 @@ secondsAdded(mrb_state *mrb, TimeImpl *p, mrb_int seconds)
 {
 	TimeImpl *newP = new TimeImpl;
 	*newP = *p;
-
+	
 	newP->_tv.tv_sec += seconds;
-//	p->_tm = *localtime(&p->_tv.tv_sec);
+	const time_t tt = p->_tv.tv_sec;
+	p->_tm = *localtime(&tt);
 
 	return wrapObject(mrb, newP, TimeType);
 }
@@ -78,7 +82,8 @@ MRB_METHOD(timePlus)
 	*newP = *p;
 
 	newP->_tv.tv_sec += seconds;
-//	p->_tm = *localtime(&p->_tv.tv_sec);
+	const time_t tt = p->_tv.tv_sec;
+	p->_tm = *localtime(&tt);
 
 	return wrapObject(mrb, newP, TimeType);
 }

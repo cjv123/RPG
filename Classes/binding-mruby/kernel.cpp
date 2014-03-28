@@ -151,11 +151,11 @@ MRB_FUNCTION(kernelLoadData)
 	const char *filename;
 	mrb_get_args(mrb, "z", &filename);
 
-	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
 	string filepath = filename;
 
 	unsigned long size;
 	unsigned char* data = CCFileUtils::sharedFileUtils()->getFileData(filepath.c_str(),"rb",&size);
+	//CCLOG("loaddata %s",filepath.c_str());
 	mrb_value ret = marshalLoadInt(mrb,(char*)data,size);
 	delete [] data;
 
@@ -171,7 +171,7 @@ MRB_FUNCTION(kernelSaveData)
 	RClass* const mod = mrb_module_get(mrb, "Marshal");
 	mrb_value result = mrb_funcall(mrb, mrb_obj_value(mod), "dump", 1, obj);
 
-	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
+	string writepath = SceneMain::writeablePath;
 	string filepath = writepath + filename;
 	char* data = RSTRING_PTR(result);
 	long len = RSTRING_LEN(result);

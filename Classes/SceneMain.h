@@ -13,6 +13,8 @@ public:
 	static CCScene* scene();
 	static CCLayer* getMainLayer();
 	virtual bool init();
+
+	static string writeablePath;
 protected:
 	RubyEngine* m_engine;
 	virtual void update(float delta);

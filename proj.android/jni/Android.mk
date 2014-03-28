@@ -18,7 +18,9 @@ FILE_LIST := hellocpp/main.cpp
 FILE_LIST += $(filter %.cpp, %.c, $(ALLFILES)) 
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%) 
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes $(LOCAL_PATH)/../../mruby/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes \
+										$(LOCAL_PATH)/../../mruby/include \
+										$(LOCAL_PATH)/../../../../../boost_1_53_0 \
 
 LOCAL_STATIC_LIBRARIES:= libmruby
 LOCAL_WHOLE_STATIC_LIBRARIES += cocos2dx_static

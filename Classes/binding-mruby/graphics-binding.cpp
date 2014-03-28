@@ -13,7 +13,7 @@ using namespace cocos2d;
 #endif
 
 
-static int g_frame_rate=40;
+int g_frame_rate=60;
 static unsigned long g_frame_count=0;
 static const unsigned long g_frame_count_max = 0xffffffffffffffff;
 static int g_fullscreen;

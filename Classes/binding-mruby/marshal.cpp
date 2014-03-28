@@ -60,6 +60,7 @@ static unsigned long readBuf(char* buf,char* outbuf,int size,int count)
 	int s = size*count;
 	memcpy(outbuf,buf,s);
 	memmove(buf,buf+s,g_buf_size - s);
+	g_buf_size -=s;
 	return s;
 }
 
@@ -208,8 +209,16 @@ struct MarshalContext
 static int
 read_fixnum(MarshalContext *ctx)
 {
-	char head = ctx->readByte();
+	char headchar= ctx->readByte();
 
+	int head = headchar;
+	if (head == 255)
+		head = -1;
+	if (head == 254)
+		head = -2;
+	if (head == 253)
+		head = -3;
+	
 	if (head == 0)
 		return 0;
 	else if (head > 5)
@@ -494,7 +503,9 @@ static mrb_value
 read_value(MarshalContext *ctx)
 {
 	mrb_state *mrb = ctx->mrb;
+
 	char type = ctx->readByte();
+
 	mrb_value value;
 	if (mrb->arena_idx > maxArena)
 		maxArena = mrb->arena_idx;
@@ -563,8 +574,9 @@ read_value(MarshalContext *ctx)
 		break;
 
 	default :
-		throw Exception(Exception::MKXPError, "Marshal.load: unsupported value type '%c'",
-		                (char) type);
+		CCLOG( "Marshal.load: unsupported value type '%c',gbufsize %d",type,g_buf_size);
+		CCAssert(false,"fuck");
+		exit(0);
 	}
 
 	mrb_gc_arena_restore(mrb, arena);
@@ -902,7 +914,7 @@ verifyMarshalHeader(MarshalContext *ctx)
 	char min = ctx->readByte();
 
 	if (maj != MARSHAL_MAJOR || min != MARSHAL_MINOR)
-		throw Exception(Exception::TypeError, "incompatible marshal file format (can't be read)");
+		CCLOG("incompatible marshal file format (can't be read)");
 }
 
 MRB_FUNCTION(marshalDump)
@@ -1025,7 +1037,6 @@ mrb_value marshalLoadInt( mrb_state* mrb, char* ops, unsigned long len)
 	g_buf_size = len;
 
 	verifyMarshalHeader(&ctx);
-
 	mrb_value val = read_value(&ctx);
 
 	return val;

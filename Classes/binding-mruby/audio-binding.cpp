@@ -1,31 +1,33 @@
 #include "binding-util.h"
 #include "exception.h"
 #include "SimpleAudioEngine.h"
+#include "..\ThreadHandlerManager.h"
 using namespace CocosDenshion;
 
 static string getSoundFilename(const char* path)
 {
 	string filename = string(path) + ".mid";
-	FILE* fp = fopen(filename.c_str(),"rb");
-	if (fp)
+	unsigned long size=0;
+	unsigned char* data =CCFileUtils::sharedFileUtils()->getFileData(filename.c_str(),"rb",&size);
+	if (size)
 	{
-		fclose(fp);
+		delete [] data;
 		return filename;
 	}
 
 	filename = string(path) + ".ogg";
-	fp = fopen(filename.c_str(),"rb");
-	if (fp)
+	data =CCFileUtils::sharedFileUtils()->getFileData(filename.c_str(),"rb",&size);
+	if (size)
 	{
-		fclose(fp);
+		delete [] data;
 		return filename;
 	}
 
 	filename = string(path) + ".mp3";
-	fp = fopen(filename.c_str(),"rb");
-	if (fp)
+	data =CCFileUtils::sharedFileUtils()->getFileData(filename.c_str(),"rb",&size);
+	if (size)
 	{
-		fclose(fp);
+		delete [] data;
 		return filename;
 	}
 	
@@ -35,60 +37,138 @@ static int g_gbs_id = 0;
 static int g_se_id = 0;
 static int g_me_id = 0;
 
+int handler_method_play_audio(int ptr1,void* ptr2) 
+{
+	int type = ptr1;
+	string* path = (string*)ptr2;
+	switch (type)
+	{
+	case 1:
+		SimpleAudioEngine::sharedEngine()->playBackgroundMusic(path->c_str(),true);
+		break;
+	case 2:
+		if (g_gbs_id)
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
+		g_gbs_id =SimpleAudioEngine::sharedEngine()->playEffect(path->c_str(),true);
+		break;
+	case 3:
+		if (g_se_id)
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
+		g_se_id =SimpleAudioEngine::sharedEngine()->playEffect(path->c_str());
+		break;
+	case 4:
+		if (g_me_id)
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
+		g_me_id =SimpleAudioEngine::sharedEngine()->playEffect(path->c_str());
+		break;
+	}
+
+	delete path;
+	return 0;
+}
+
+int handler_method_stop_audio(int ptr1,void* ptr2) 
+{
+	int type = ptr1;
+	switch (type)
+	{
+	case 1:
+		if (SimpleAudioEngine::sharedEngine()->isBackgroundMusicPlaying())
+			SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
+		break;
+	case 2:
+		if(g_gbs_id)
+		{
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
+			g_gbs_id = 0;
+		}
+		break;
+	case 3:
+		if (g_se_id)
+		{
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
+			g_se_id = 0;
+		}
+		break;
+	case 4:
+		if (g_me_id)
+		{
+			SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
+			g_me_id = 0;
+		}
+		break;
+	}
+	return 0;
+}
+
+extern pthread_mutex_t s_thread_handler_mutex;
 static void play_bgm_sound(const char* path)
 {
-	string filename = getSoundFilename(path);
-	SimpleAudioEngine::sharedEngine()->playBackgroundMusic(filename.c_str(),true);
+	string* filename =new string(getSoundFilename(path));
+	ThreadHandler hander={handler_method_play_audio,1,(void*)filename};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void play_bgs_sound(const char* path)
 {
-	string filename = getSoundFilename(path);
-	if (g_gbs_id)
-		SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
-	g_gbs_id =SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str(),true);
+	string* filename =new string(getSoundFilename(path));
+	ThreadHandler hander={handler_method_play_audio,2,(void*)filename};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void play_se_sound(const char* path)
 {
-	string filename = getSoundFilename(path);
-	if (g_se_id)
-		SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
-	g_se_id = SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str());
+	string* filename =new string(getSoundFilename(path));
+	ThreadHandler hander={handler_method_play_audio,3,(void*)filename};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void play_me_sound(const char* path)
 {
-	string filename = getSoundFilename(path);
-	if (g_me_id)
-		SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
-	g_me_id = SimpleAudioEngine::sharedEngine()->playEffect(filename.c_str());
+	string* filename =new string(getSoundFilename(path));
+	ThreadHandler hander={handler_method_play_audio,4,(void*)filename};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void stop_bgm_sound()
 {
-	if (SimpleAudioEngine::sharedEngine()->isBackgroundMusicPlaying())
-		SimpleAudioEngine::sharedEngine()->stopBackgroundMusic();
+	ThreadHandler hander={handler_method_stop_audio,1,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void stop_bgs_sound()
 {
-	if(g_gbs_id)
-		SimpleAudioEngine::sharedEngine()->stopEffect(g_gbs_id);
+	ThreadHandler hander={handler_method_stop_audio,2,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void stop_se_sound()
 {
-	if (g_se_id)
-			SimpleAudioEngine::sharedEngine()->stopEffect(g_se_id);
+	ThreadHandler hander={handler_method_stop_audio,3,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 static void stop_me_sound()
 {
-	if (g_me_id)
-		SimpleAudioEngine::sharedEngine()->stopEffect(g_me_id);
+	ThreadHandler hander={handler_method_stop_audio,4,(void*)NULL};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandlerAudio(hander);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
-
 
 #define DEF_PLAY_STOP(entity) \
 	MRB_FUNCTION(audio_##entity##Play) \

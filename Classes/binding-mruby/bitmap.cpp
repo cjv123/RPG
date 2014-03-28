@@ -28,6 +28,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* image)
 	if (image)
 	{
 		CCTexture2D* texture = new CCTexture2D;
+		texture->autorelease();
 		texture->initWithImage(ccimage);
 		sp = CCSprite::createWithTexture(texture);
 		
@@ -442,10 +443,19 @@ void Bitmap::setFont(Font* value)
 
 IntRect Bitmap::textSize(const char *str)
 {
+
+#ifndef WIN32
+	int interval = 0;
+	int highline = 3;
+ 	int w = (p->font->getSize()*0.4+interval)*strlen(str);
+ 	int h = 15;
+	IntRect rect(0,0,20,20);
+#else
 	CCImage* image = new CCImage;
 	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());
 	IntRect rect(0,0,image->getWidth(),image->getHeight());
 	delete image;
+#endif
 	return rect;
 }
 
@@ -471,7 +481,9 @@ int Bitmap::handler_method_release( int ptr1,void* ptr2 )
 
 	if (NULL!=emubitmap)
 	{
+		CCTexture2D* releaseTexture = emubitmap->getTexture();
 		emubitmap->release();
+		CCTextureCache::sharedTextureCache()->removeTexture(releaseTexture);
 	}
 
 	if (NULL!=fontRender)
@@ -488,8 +500,6 @@ void Bitmap::releaseResources()
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
-
-	
 }
 
 CCSprite* Bitmap::getEmuBitmap()

@@ -12,6 +12,12 @@ using namespace std;
 #include <cocos2d.h>
 using namespace cocos2d;
 
+#ifndef WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+#include "../SceneMain.h"
+
 DEF_TYPE(File);
 
 /* File class methods */
@@ -268,7 +274,7 @@ MRB_METHOD(fileGetMtime)
 	struct stat fileStat;
 	stat(fileimpl->getPath().c_str(), &fileStat);
 
-	return timeFromSecondsInt(mrb, fileStat.st_mtim.tv_sec);
+	return timeFromSecondsInt(mrb, fileStat.st_mtime);
 #endif
 }
 
@@ -277,8 +283,9 @@ MRB_FUNCTION(fileTestDoesExist)
 {
 	const char *filename;
 	mrb_get_args(mrb, "z", &filename);
-	string writepath = CCFileUtils::sharedFileUtils()->getWritablePath();
+	string writepath = SceneMain::writeablePath;
 	string filepath = writepath + filename;
+
 	bool ret = false;
 	FILE* f = fopen(filepath.c_str(),"r");
 	if (f)
@@ -365,7 +372,7 @@ File::~File()
 
 FILE* File::Open( const char* filename,const char* mode )
 {
-	string path = CCFileUtils::sharedFileUtils()->getWritablePath() + filename;
+	string path = SceneMain::writeablePath + filename;
 	m_fp = fopen(path.c_str(),mode);
 	m_path = path;
 	return m_fp;

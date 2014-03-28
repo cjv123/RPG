@@ -76,6 +76,8 @@ bool SceneMain::init()
 		return false;
 	}
 
+	writeablePath = CCFileUtils::sharedFileUtils()->getWritablePath();
+
 	m_lastkey = 0;
 
 #ifdef WIN32
@@ -117,6 +119,7 @@ CCLayer* SceneMain::getMainLayer()
 	return mainlayer;
 }
 
+extern int g_frame_rate;
 static int timer_key_sleep = 0;
 void SceneMain::updateGamePad( float delta )
 {
@@ -191,7 +194,7 @@ void SceneMain::updateGamePad( float delta )
 				if(!timer_key_sleep)
 					timer_key_sleep++;
 
-				if (timer_key_sleep<30)
+				if (timer_key_sleep<g_frame_rate/2)
 					return;
 			}
 			m_lastkey = (int)info.code;
@@ -208,4 +211,6 @@ void SceneMain::updateGamePad( float delta )
 	}
 	
 }
+
+string SceneMain::writeablePath;
 

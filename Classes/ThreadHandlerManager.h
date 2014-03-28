@@ -22,10 +22,12 @@ class ThreadHandlerMananger
 public:
 	static ThreadHandlerMananger* getInstance();
 	void pushHandler(ThreadHandler& handler,void* instance);
+	void pushHandlerAudio(ThreadHandler& handler);
 	void deleteHandler(int insance);
 	void update(float delay);
 protected:
 	list<ThreadHandler> m_HandlerList;
+	list<ThreadHandler> m_HandlerAudioList;
 	ThreadHandlerMananger();
 };
 

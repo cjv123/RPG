@@ -143,6 +143,11 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Bitmap* bitmap = (Bitmap*)ptr2;
 
+	if (!bitmap->getEmuBitmap())
+	{
+		return -1;
+	}
+
 	sprite->p->bitmap = bitmap;
 	if (sprite->p->bitmap->getFilename()!="")
 		sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());

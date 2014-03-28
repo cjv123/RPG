@@ -13,9 +13,12 @@ static void strToLower(std::string &str)
 		str[i] = tolower(str[i]);
 }
 
-
-
+#ifdef WIN32
 std::string FontPrivate::defaultName   = "Arial";
+#else 
+std::string FontPrivate::defaultName   = "cour.ttf";
+#endif
+
 int         FontPrivate::defaultSize   = 22;
 bool        FontPrivate::defaultBold   = false;
 bool        FontPrivate::defaultItalic = false;

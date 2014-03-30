@@ -209,15 +209,7 @@ struct MarshalContext
 static int
 read_fixnum(MarshalContext *ctx)
 {
-	char headchar= ctx->readByte();
-
-	int head = headchar;
-	if (head == 255)
-		head = -1;
-	if (head == 254)
-		head = -2;
-	if (head == 253)
-		head = -3;
+	mrb_int head= static_cast<signed char>(ctx->readByte());
 	
 	if (head == 0)
 		return 0;

@@ -116,11 +116,8 @@ void RubyEngine::showExcMessageBox(mrb_value exc)
 	mrb_value file = mrb_attr_get(m_mrb, exc, mrb_intern_lit(m_mrb, "file"));
 	const char *excClass = mrb_class_name(m_mrb, mrb_class(m_mrb, exc));
 
-	char msgBoxText[512];
-	snprintf(msgBoxText, 512, "Script '%s' line %d: %s occured.\n%s\n",
+	CCLOG("Script '%s' line %d: %s occured.\n%s\n",
 		mrbValueString(file), mrb_fixnum(line), excClass, mrbValueString(mesg));
-
-	CCLOG(msgBoxText);
 }
 
 void RubyEngine::runScript(const char* script,int len/*=0*/ )

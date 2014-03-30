@@ -42,8 +42,8 @@ static void printP(mrb_state *mrb,
 		if (i < argc)
 			mrb_str_buf_cat(mrb, buffer, sep, strlen(sep));
 	}
-
-	CCLOG(RSTRING_PTR(buffer));
+	string log = RSTRING_PTR(buffer);
+	CCLOG("%s",log.c_str());
 }
 
 MRB_FUNCTION(kernelP)

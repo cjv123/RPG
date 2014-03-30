@@ -75,7 +75,6 @@ Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL),m_fontRender(0)
 		m_height = image->getHeight();
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
-		
 	}
 
 
@@ -447,9 +446,9 @@ IntRect Bitmap::textSize(const char *str)
 #ifndef WIN32
 	int interval = 0;
 	int highline = 3;
- 	int w = (p->font->getSize()*0.4+interval)*strlen(str);
- 	int h = 15;
-	IntRect rect(0,0,20,20);
+ 	int w = 22*strlen(str);
+ 	int h = p->font->getSize();
+	IntRect rect(0,0,w,h);
 #else
 	CCImage* image = new CCImage;
 	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());

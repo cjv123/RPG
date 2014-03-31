@@ -13,6 +13,25 @@ using namespace cocos2d;
 #include <pthread.h>
 #include "../ThreadHandlerManager.h"
 
+int checkUtf8Len(const char* str)
+{
+	int len = 0;
+
+	//中文判断
+	char utf8check_tmp = str[0];
+	int i=7;
+	while (1)
+	{
+		char checkbyte = 1;
+		if ((utf8check_tmp & (checkbyte<<i))!=0)
+			len++;
+		else
+			break;
+		i--;
+	}
+	return len;
+}
+
 MRB_FUNCTION(kernelEval)
 {
 	const char *exp;
@@ -254,13 +273,14 @@ MRB_METHOD(string_gsub2)
 		mrb_raise(mrb, E_ARGUMENT_ERROR, "both block and replace expression must not be passed");
 	}
 	char* self_str = mrb_string_value_ptr(mrb,self);
-	char* findret = self_str;
+	string findret = self_str;
+	int findoff=0;
 	while (1)
 	{
-		if(*findret==0)
+		if(findret[0]==0)
 			break;
 
-		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret));
+		mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,findret.c_str()));
 		if (mrb_nil_p(matchdata))
 			break;
 		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
@@ -276,15 +296,21 @@ MRB_METHOD(string_gsub2)
 		
 		char* ret_str = RSTRING_PTR(blockret);
 
-		findret = strstr(findret,findchar);
-		memcpy(findret,ret_str,RSTRING_LEN(regchar));
-		findret+=RSTRING_LEN(regchar);
+		int findpos = findret.find(findchar,findoff);
+		findret.replace(findpos,RSTRING_LEN(regchar),ret_str);
+		findoff+=RSTRING_LEN(blockret);
 	}
 
 	if (findret == self_str)
 	{
 		return mrb_nil_value();
 	}
+	
+	if(RSTRING_LEN(self)<findret.size())
+	{
+		RSTRING_PTR(self) = (char*)mrb_malloc(mrb,findret.size()+1);
+	}
+	strcpy(RSTRING_PTR(self),findret.c_str());
 
 	return self;
 }
@@ -429,20 +455,7 @@ MRB_METHOD(string_slice2)
 		
 		mrb_value regchar = mrb_funcall(mrb,matchdata,"to_s",0);
 		char* regchar_c = RSTRING_PTR(regchar);
-		int del_len = 0;
-
-		//中文判断
-		char utf8check_tmp = regchar_c[0];
-		int i=7;
-		while (1)
-		{
-			char checkbyte = 1;
-			if ((utf8check_tmp & (checkbyte<<i))!=0)
-				del_len++;
-			else
-				break;
-			i--;
-		}
+		int del_len = checkUtf8Len(regchar_c);
 
 		if (del_len==0)
 			del_len = RSTRING_LEN(regchar);

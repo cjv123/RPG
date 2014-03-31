@@ -88,6 +88,7 @@ void RubyEngine::initBindingMethod()
 	runScript((const char*)data,size);
 	delete [] data;
 	mrb_define_global_const(m_mrb, "MKXP", mrb_true_value());
+
 	mrb_gc_arena_restore(m_mrb, arena);
 }
 
@@ -210,6 +211,20 @@ void RubyEngine::initRMXPScript( const char* filename )
 				script.replace(pos,strlen(findstr.c_str()),"unless @item!=nil and $game_party.item_can_use?(@item.id)");
 
 			return;
+		}
+
+		if (m_RMXPScripts[i].name == "Window_Message")
+		{
+			string& script = m_RMXPScripts[i].script;
+			string findstr="$1";
+			while(1)
+			{
+				int pos = script.find(findstr.c_str());
+				if (pos!=-1)
+					script.replace(pos,strlen(findstr.c_str()),"Regexp.last_match[1]");
+				else
+					break;
+			}
 		}
 	}
 }

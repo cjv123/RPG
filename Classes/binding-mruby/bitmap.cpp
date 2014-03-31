@@ -341,11 +341,13 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		bitmap->m_fontRender = fontRender;
 		fontRender->retain();
 		firstdraw = true;
+		fontRender->getSprite()->getTexture()->setAliasTexParameters();
 	}
 
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
 
 	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),ptr2struct->font->getName(),ptr2struct->font->getSize());
+	label->getTexture()->setAliasTexParameters();
 	if (ptr2struct->font)
 	{
 		Font* f = ptr2struct->font; 
@@ -374,7 +376,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 // 	masklayer->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)-masklayer->getContentSize().height));
 // 	ccBlendFunc fun = {GL_ZERO,GL_ZERO};
 // 	masklayer->setBlendFunc(fun);
-	
+
 	fontRender->begin();
 	//masklayer->visit();
 	label->visit();
@@ -451,19 +453,17 @@ void Bitmap::setFont(Font* value)
 
 IntRect Bitmap::textSize(const char *str)
 {
-
-#ifndef WIN32
 	int interval = 0;
 	int highline = 3;
- 	int w = 22*strlen(str);
+ 	int w = p->font->getSize()/2.3*strlen(str);
  	int h = p->font->getSize();
 	IntRect rect(0,0,w,h);
-#else
-	CCImage* image = new CCImage;
-	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());
-	IntRect rect(0,0,image->getWidth(),image->getHeight());
-	delete image;
-#endif
+
+// 	CCImage* image = new CCImage;
+// 	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());
+// 	IntRect rect(0,0,image->getWidth(),image->getHeight());
+// 	delete image;
+
 	return rect;
 }
 

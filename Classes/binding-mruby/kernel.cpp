@@ -271,6 +271,9 @@ MRB_METHOD(string_gsub2)
 		strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
 
 		mrb_value blockret = mrb_yield(mrb,block,regchar);
+		if (mrb_nil_p(blockret))
+			break;
+		
 		char* ret_str = RSTRING_PTR(blockret);
 
 		findret = strstr(findret,findchar);

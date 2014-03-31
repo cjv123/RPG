@@ -375,11 +375,11 @@ void Tilemap::setOY(int value)
 
 int Tilemap::handler_method_release( int ptr1,void* ptr2 )
 {
-	Tilemap* tilemap = (Tilemap*)ptr1;
+	vector<CCSprite*>* sps= (vector<CCSprite*>*)ptr1;
 
-	for (int i=0;i<tilemap->m_tiles.size();i++)
+	for (int i=0;i<sps->size();i++)
 	{
-		tilemap->m_tiles[i].sp->removeAllChildrenWithCleanup(true);
+		sps->at(i)->removeFromParentAndCleanup(true);
 	}
 
 	return 0;
@@ -387,9 +387,14 @@ int Tilemap::handler_method_release( int ptr1,void* ptr2 )
 
 void Tilemap::releaseResources()
 {
+	vector<CCSprite*>* delsps = new vector<CCSprite*>;
+	for (int i=0;i<m_tiles.size();i++)
+	{
+		delsps->push_back(m_tiles[i].sp);
+	}
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	ThreadHandler hander={handler_method_release,(int)delsps,(void*)NULL};
+	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 

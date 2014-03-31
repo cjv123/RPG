@@ -111,6 +111,7 @@ void SceneMain::update( float delta )
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->update(delta);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+
 }
 
 CCLayer* SceneMain::getMainLayer()
@@ -120,7 +121,6 @@ CCLayer* SceneMain::getMainLayer()
 }
 
 extern int g_frame_rate;
-static int timer_key_sleep = 0;
 void SceneMain::updateGamePad( float delta )
 {
 	Input::ButtonListStruct info={Input::None,0};
@@ -180,33 +180,16 @@ void SceneMain::updateGamePad( float delta )
 		info.code = Input::C;
 	}
 
-	if(timer_key_sleep)
-		timer_key_sleep++;
-	if(timer_key_sleep>30)
-		timer_key_sleep = 0;
 
 	if (info.code!=Input::None)
 	{
-		if(info.isDown)
-		{
-			if (m_lastkey == (int)info.code)
-			{
-				if(!timer_key_sleep)
-					timer_key_sleep++;
-
-				if (timer_key_sleep<g_frame_rate/2)
-					return;
-			}
-			m_lastkey = (int)info.code;
-		}
-		else
-		{
-			if (m_lastkey == (int)info.code)
-				m_lastkey = 0;
-		}
-
 		pthread_mutex_lock(&s_input_codelist_mutex);
-		Input::getInstance()->pushkey(info);
+		if (!info.isDown || 
+			(Input::getInstance()->getKeyStatus(info.code) != Input::Button_State_Down && Input::getInstance()->getKeyStatus(info.code) != Input::Button_State_Just_Down))
+		{
+			Input::getInstance()->pushkey(info);
+		}
+		
 		pthread_mutex_unlock(&s_input_codelist_mutex);
 	}
 	

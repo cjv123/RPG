@@ -17,6 +17,13 @@ void ThreadHandlerMananger::pushHandlerAudio( ThreadHandler& handler )
 	m_HandlerAudioList.push_back(handler);
 }
 
+
+void ThreadHandlerMananger::pushHandlerRelease( ThreadHandler& handler )
+{
+	m_handleReleaseList.push_back(handler);
+}
+
+
 void ThreadHandlerMananger::deleteHandler( int instance )
 {
 	list<ThreadHandler>::iterator it = m_HandlerList.begin();
@@ -52,6 +59,17 @@ void ThreadHandlerMananger::update( float delay )
 			ThreadHandler& handler =  m_HandlerAudioList.front();
 			handler.method(handler.ptr1,handler.ptr2);
 			m_HandlerAudioList.pop_front();
+		}
+	}
+
+	handlerSize = m_handleReleaseList.size();
+	if (handlerSize>0)
+	{
+		for (int i=0;i<handlerSize;i++)
+		{
+			ThreadHandler& handler = m_handleReleaseList.front();
+			handler.method(handler.ptr1,handler.ptr2);
+			m_handleReleaseList.pop_front();
 		}
 	}
 }

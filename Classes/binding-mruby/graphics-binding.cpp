@@ -87,7 +87,7 @@ static int handler_method_graphicsTransition(int ptr1,void* ptr2)
 		SceneMain::getMainLayer()->addChild(layer,5000);
 		float delay = ptr->duration*1.0f/g_frame_rate;
 		TransCallBack* callback = new TransCallBack;
-		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),NULL);
+		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),CCRemoveSelf::create(),NULL);
 		layer->runAction(seq);
 	}
 	else
@@ -100,7 +100,7 @@ static int handler_method_graphicsTransition(int ptr1,void* ptr2)
 		SceneMain::getMainLayer()->addChild(sp,5000);
 		float delay = ptr->duration*1.0f/g_frame_rate;
 		TransCallBack* callback = new TransCallBack;
-		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),NULL);
+		CCSequence* seq = CCSequence::create(CCFadeOut::create(delay),CCCallFunc::create(callback,callfunc_selector(TransCallBack::onTransComplete)),CCRemoveSelf::create(),NULL);
 		sp->runAction(seq);
 	}
 

@@ -220,6 +220,15 @@ int Window::handler_method_set_content( int ptr1,void* ptr2 )
 {
 	Window* window = (Window*)ptr1;
 	Bitmap* content = window->p->contents;
+	Bitmap* delcontent = (Bitmap*)ptr2;
+	if (delcontent)
+	{
+		if (delcontent->getEmuBitmap() && delcontent->getEmuBitmap()->getParent())
+		{
+			delcontent->getEmuBitmap()->removeFromParentAndCleanup(true);
+		}
+		delcontent->dispose();
+	}
 	
 	if (window->m_contentNode &&
 		window->m_contentNode->getContentSize().width &&
@@ -240,12 +249,12 @@ void Window::setContents(Bitmap *value)
 	if (p->contents == value)
 		return;
 
-	ThreadHandler hander={handler_method_set_content,(int)this,(void*)0};
+	ThreadHandler hander={handler_method_set_content,(int)this,(void*)p->contents};
 	pthread_mutex_lock(&s_thread_handler_mutex);
+	p->contents = value;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
-	p->contents = value;
 }
 
 struct SetPropStruct
@@ -352,7 +361,7 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 		else
 		{
 			cursorSp = CCScale9Sprite::createWithSpriteFrame(
-			CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
+				CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
 			window->m_contentNode->addChild(cursorSp,cursor_z);
 			window->m_cursorSp = cursorSp;
 			cursorSp->setAnchorPoint(ccp(0,1));
@@ -546,7 +555,7 @@ void Window::releaseResources()
 {
 	ThreadHandler hander={handler_method_release,(int)m_winNode,(void*)m_contentNode};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
@@ -602,7 +611,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
 	contentNode->setPosition(ccp(winnode->getPositionX()+16,winnode->getPositionY() - winnode->getContentSize().height+16));
 
-	handler_method_set_content( (int)window,(void*)0 );
+	handler_method_set_content( (int)window,(void*)0);
 	handler_method_set_cursor_rect((int)window,(void*)0);
 	return 0;
 }

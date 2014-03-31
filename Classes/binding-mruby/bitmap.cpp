@@ -266,8 +266,12 @@ int Bitmap::handler_method_clear( int ptr1,void* ptr2 )
 	if (NULL!= bitmap->getEmuBitmap())
 	{
 		bitmap->m_emuBitmap->removeAllChildrenWithCleanup(true);
-		//bitmap->m_fontRender->release();
-		bitmap->m_fontRender = NULL;
+		if (bitmap->m_fontRender)
+		{
+			bitmap->m_fontRender->release();
+			bitmap->m_fontRender = NULL;
+		}
+	
 	}
 
 	return 0;
@@ -327,6 +331,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	if (NULL==bitmap->m_emuBitmap)
 		return -1;
 
+	bool firstdraw = false;
 	CCRenderTexture* fontRender = (CCRenderTexture*)bitmap->m_fontRender;
 	if (NULL==fontRender)
 	{
@@ -335,6 +340,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		fontRender->setPosition(ccp(bitmap->m_width/2,bitmap->m_height/2));
 		bitmap->m_fontRender = fontRender;
 		fontRender->retain();
+		firstdraw = true;
 	}
 
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
@@ -361,17 +367,19 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		label->setHorizontalAlignment(kCCTextAlignmentRight);
 	else if (ptr2struct->align == Bitmap::Left)
 		label->setHorizontalAlignment(kCCTextAlignmentLeft);
+		
 
-	CCLayerColor* masklayer = CCLayerColor::create(ccc4(255,255,255,255));
-	masklayer->setContentSize(label->getContentSize());
-	masklayer->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)-masklayer->getContentSize().height));
-	ccBlendFunc fun = {GL_ZERO,GL_ZERO};
-	masklayer->setBlendFunc(fun);
-
+// 	CCLayerColor* masklayer = CCLayerColor::create(ccc4(255,255,255,255));
+// 	masklayer->setContentSize(label->getContentSize());
+// 	masklayer->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)-masklayer->getContentSize().height));
+// 	ccBlendFunc fun = {GL_ZERO,GL_ZERO};
+// 	masklayer->setBlendFunc(fun);
+	
 	fontRender->begin();
 	//masklayer->visit();
 	label->visit();
 	fontRender->end();
+
 	delete ptr2struct;
 	return 0;
 }
@@ -379,6 +387,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 
 void Bitmap::drawText(const IntRect &rect, const char *str, int align)
 {
+
 	DrawtextStruct* ptr2 = new DrawtextStruct;
 	ptr2->rect = rect;ptr2->str = str;ptr2->align = align;ptr2->font = new Font(*p->font);
 	ThreadHandler hander={handler_method_drawtext,(int)this,(void*)ptr2};
@@ -497,7 +506,7 @@ void Bitmap::releaseResources()
 {
 	ThreadHandler hander={handler_method_release,(int)m_emuBitmap,(void*)m_fontRender};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 

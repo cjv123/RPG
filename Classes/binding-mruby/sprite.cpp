@@ -513,7 +513,7 @@ void Sprite::releaseResources()
 {
 	ThreadHandler hander={handler_method_release,(int)m_sprite,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 }
@@ -562,7 +562,7 @@ int Sprite::handler_method_flash( int ptr1,void* ptr2 )
 		emubitmap->addChild(masksp);
 
 		CCFadeOut* fadeout = CCFadeOut::create(duration);
-		masksp->runAction(fadeout);
+		masksp->runAction(CCSequence::create(fadeout,CCRemoveSelf::create(),NULL));
 
 		
 	}

@@ -237,10 +237,12 @@ void* RubyEngine::networkThread( void* data )
 		mrb_gc_arena_restore(engine->m_mrb, ai);
 		engine->checkException();
 	}
-	pthread_mutex_destroy(&s_thread_handler_mutex);
-	CCDirector::sharedDirector()->end();
-	pthread_exit(0);
 
+#ifndef WIN32
+	CCDirector::sharedDirector()->end();
+#endif
+	pthread_exit(0);
+	pthread_mutex_destroy(&s_thread_handler_mutex);
 
 	return 0;
 }

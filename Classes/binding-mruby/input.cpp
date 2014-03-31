@@ -176,3 +176,8 @@ int Input::dir8Value()
 	}
 	return 0;
 }
+
+Input::Button_Status_Type Input::getKeyStatus( ButtonCode code )
+{
+	return m_buttonStateMap[code];
+}

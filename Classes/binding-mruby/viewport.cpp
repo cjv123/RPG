@@ -198,11 +198,10 @@ void Viewport::draw()
 
 int Viewport::handler_method_release( int ptr1,void* ptr2 )
 {
-	Viewport* viewport = (Viewport*)ptr1;
-	if (viewport->m_clippingNode)
+	CCClippingNode* clippingNode = (CCClippingNode*)ptr1;
+	if (clippingNode)
 	{
-		viewport->m_clippingNode->removeFromParentAndCleanup(true);
-		viewport->m_clippingNode = NULL;
+		clippingNode->removeFromParentAndCleanup(true);
 	}
 	return 0;
 }
@@ -211,9 +210,9 @@ int Viewport::handler_method_release( int ptr1,void* ptr2 )
 /* Disposable */
 void Viewport::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)this,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)m_clippingNode,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
 }

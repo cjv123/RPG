@@ -119,6 +119,8 @@ void RubyEngine::showExcMessageBox(mrb_value exc)
 
 	CCLOG("Script '%s' line %d: %s occured.\n%s\n",
 		mrbValueString(file), mrb_fixnum(line), excClass, mrbValueString(mesg));
+
+	CCAssert(false,"fuck");
 }
 
 void RubyEngine::runScript(const char* script,int len/*=0*/ )

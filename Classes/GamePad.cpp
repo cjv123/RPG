@@ -8,6 +8,8 @@ bool GamePad::init()
 		return false;
 	setTouchEnabled(true);
 
+	m_handler = NULL;
+
 	mUILayer =UILayer::create();
 	mUIWidget = GUIReader::shareReader()->widgetFromJsonFile("gamepad_ui_1.ExportJson");
 	mUILayer->addWidget(mUIWidget);
@@ -74,15 +76,23 @@ void GamePad::update( float delta )
 					if (curdis<olddis)
 					{
 						pointInButton[i]->setFocused(false);
-						mButtonStatesMap[(Button_Name)pointInButton[i]->getTag()] = Button_State_None;
+						mButtonStatesMap[(Button_Name)pointInButton[i]->getTag()] = Button_State_Up;
 						pointInButton[i] = uiButton;
+
+						if(m_handler)
+							m_handler(0,it->first);
 					}
 				}
 				else
 				{
-					uiButton->setFocused(true);
-					it->second = Button_State_Down;
-					pointInButton[i] = uiButton;
+					if(it->second!=Button_State_Down)
+					{
+						uiButton->setFocused(true);
+						it->second = Button_State_Down;
+						pointInButton[i] = uiButton;
+						if(m_handler)
+							m_handler(1,it->first);
+					}
 				}
 				break;
 			}
@@ -92,6 +102,8 @@ void GamePad::update( float delta )
 				if (it->second == Button_State_Down)
 				{
 					it->second = Button_State_Up;
+					if(m_handler)
+						m_handler(0,it->first);
 				}
 			}
 		}
@@ -200,5 +212,10 @@ void GamePad::ccTouchesCancelled( CCSet *pTouches, CCEvent *pEvent )
 void GamePad::registerWithTouchDispatcher( void )
 {
 	CCDirector::sharedDirector()->getTouchDispatcher()->addStandardDelegate(this,getTouchPriority());
+}
+
+void GamePad::setHandler( GAME_PAD_HANDLER funp )
+{
+	m_handler = funp;
 }
 

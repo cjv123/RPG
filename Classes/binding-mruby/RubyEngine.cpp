@@ -180,16 +180,20 @@ void RubyEngine::initRMXPScript( const char* filename )
 
 			break;
 		}
-
+		
 		struct RMXPScript scriptdata={id,scriptname,decodeBuffer};
 		m_RMXPScripts.push_back(scriptdata);
 
-// 		char header[3] = {0xef, 0xbb, 0xbf}; 
-// 		string path = scriptdata.name + ".rb";
-// 		FILE* f = fopen(path.c_str(),"wb");
-// 		fwrite(header,sizeof(char),3,f);
-// 		fwrite(decodeBuffer.c_str(),sizeof(char),decodeBuffer.size(),f);
-// 		fclose(f);
+// 		char header[3] = {0xef, 0xbb, 0xbf};
+// 		if (scriptdata.name!="")
+// 		{
+// 			string path = scriptdata.name + ".rb";
+// 			FILE* f = fopen(path.c_str(),"wb");
+// 			fwrite(header,sizeof(char),3,f);
+// 			fwrite(decodeBuffer.c_str(),sizeof(char),decodeBuffer.size(),f);
+// 			fclose(f);
+// 		}
+		
 	}
 
 	delete [] data;
@@ -248,6 +252,7 @@ void* RubyEngine::networkThread( void* data )
 	for (int i=0;i<script_cout;i++)
 	{
 		int ai = mrb_gc_arena_save(engine->m_mrb);
+		CCLOG("run script:%s",engine->m_RMXPScripts[i].name.c_str());
 		engine->runScript(engine->m_RMXPScripts[i].script.c_str());
 		mrb_gc_arena_restore(engine->m_mrb, ai);
 		engine->checkException();

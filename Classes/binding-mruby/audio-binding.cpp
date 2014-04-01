@@ -170,6 +170,10 @@ static void stop_me_sound()
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
+/*
+play_##entity##_sound(filename); \
+	stop_##entity##_sound(); \*/
+
 #define DEF_PLAY_STOP(entity) \
 	MRB_FUNCTION(audio_##entity##Play) \
 	{ \
@@ -177,13 +181,11 @@ static void stop_me_sound()
 		mrb_int volume = 100; \
 		mrb_int pitch = 100; \
 		mrb_get_args(mrb, "z|ii", &filename, &volume, &pitch); \
-		play_##entity##_sound(filename); \
 		return mrb_nil_value(); \
 	} \
 	MRB_FUNCTION(audio_##entity##Stop) \
 	{ \
 		MRB_FUN_UNUSED_PARAM; \
-		stop_##entity##_sound(); \
 		return mrb_nil_value(); \
 	}
 

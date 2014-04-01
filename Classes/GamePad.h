@@ -8,6 +8,8 @@ using namespace cocos2d::extension;
 #include <map>
 using namespace std;
 
+typedef void (*GAME_PAD_HANDLER)(int,int);   
+
 class GamePad : public CCLayerRGBA
 {
 public:
@@ -20,6 +22,7 @@ public:
 	virtual void update(float delta);
 	bool isPress(Button_Name buttonName);
 	bool isJustPress(Button_Name buttonName);
+	void setHandler(GAME_PAD_HANDLER funp);
 private:
 	virtual void ccTouchesBegan( CCSet *pTouches, CCEvent *pEvent );
 
@@ -50,6 +53,7 @@ private:
 	typedef map<Button_Name,Button_Status_Type> Button_State_Map_Type;
 	Button_State_Map_Type mButtonStatesMap;
 	MousePoint mPoints[5];
+	GAME_PAD_HANDLER m_handler;
 };
 
 #endif

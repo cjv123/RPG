@@ -1,9 +1,5 @@
 LOCAL_PATH := $(call my-dir)
 
-LOCAL_MODULE := libmruby      
-LOCAL_SRC_FILES :=../libmruby.a 
-include $(PREBUILT_STATIC_LIBRARY)    #or PREBUILT_SHARED_LIBRARY
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := cocos2dcpp_shared
 LOCAL_MODULE_FILENAME := libcocos2dcpp
@@ -21,8 +17,9 @@ LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes \
 										$(LOCAL_PATH)/../../mruby/include \
 										$(LOCAL_PATH)/../../../../../boost_1_53_0 \
-
-LOCAL_STATIC_LIBRARIES:= libmruby
+										$(LOCAL_PATH)/../../freetype2 \
+										
+LOCAL_LDLIBS := -L$(LOCAL_PATH)/../deplibs -lfreetype -lmruby
 LOCAL_WHOLE_STATIC_LIBRARIES += cocos2dx_static
 LOCAL_WHOLE_STATIC_LIBRARIES += cocosdenshion_static
 LOCAL_WHOLE_STATIC_LIBRARIES += box2d_static

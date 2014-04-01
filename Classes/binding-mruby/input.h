@@ -53,7 +53,7 @@ public:
 	void popkey(ButtonListStruct code);
 
 	enum Button_Status_Type{Button_State_None=0,Button_State_Just_Down,Button_State_Down,Button_State_Up};
-	Button_Status_Type getKeyStatus(ButtonCode code);
+	int getKeyStatus(ButtonCode code);
 private:
 	Input();
 	~Input();

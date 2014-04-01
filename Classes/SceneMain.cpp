@@ -50,12 +50,45 @@ static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 }
 #endif
 
+static void handler_gamepad(int isdown,int code)
+{
+	Input::ButtonListStruct info={Input::None,0};
+	GamePad::Button_Name c = (GamePad::Button_Name)code;
+	switch (c)
+	{
+	case GamePad::Button_Up:
+		info.code = Input::Up;
+		break;
+	case GamePad::Button_Down:
+		info.code = Input::Down;
+		break;
+	case GamePad::Button_Left:
+		info.code = Input::Left;
+		break;
+	case GamePad::Button_Right:
+		info.code = Input::Right;
+		break;
+	case GamePad::Button_Menu:
+		info.code = Input::C;
+		break;
+	case GamePad::Button_Back:
+		info.code = Input::B;
+		break;
+	}
+
+	info.isDown = isdown;
+	pthread_mutex_lock(&s_input_codelist_mutex);
+	Input::getInstance()->pushkey(info);
+	pthread_mutex_unlock(&s_input_codelist_mutex);
+}
+
 CCScene* SceneMain::scene()
 {
 	CCScene *scene = CCScene::create();
 	g_gamepad = GamePad::create();
 	scene->addChild(g_gamepad,10);
-
+	g_gamepad->setHandler(handler_gamepad);
+	
 	SceneMain* layer = SceneMain::create();
 	scene->addChild(layer);
 	CCSize sceneSize = scene->getContentSize();
@@ -104,7 +137,6 @@ void SceneMain::update( float delta )
 
 	if(g_gamepad)
 	{
-		updateGamePad(delta);
 		g_gamepad->update(delta);
 	}
 
@@ -118,81 +150,6 @@ CCLayer* SceneMain::getMainLayer()
 {
 	CCLayer* mainlayer = dynamic_cast<CCLayer*>(CCDirector::sharedDirector()->getRunningScene()->getChildByTag(MAIN_LAYER_TAG));
 	return mainlayer;
-}
-
-extern int g_frame_rate;
-void SceneMain::updateGamePad( float delta )
-{
-	Input::ButtonListStruct info={Input::None,0};
-	if (g_gamepad->isPress(GamePad::Button_Up))
-	{
-		info.code = Input::Up;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isPress(GamePad::Button_Down))
-	{
-		info.code = Input::Down;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isPress(GamePad::Button_Left))
-	{
-		info.code = Input::Left;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isPress(GamePad::Button_Right))
-	{
-		info.code = Input::Right;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Up))
-	{
-		info.code = Input::Up;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Down))
-	{
-		info.code = Input::Down;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Left))
-	{
-		info.code = Input::Left;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Right))
-	{
-		info.code = Input::Right;
-	}
-	
-	if (g_gamepad->isPress(GamePad::Button_Back))
-	{
-		info.code = Input::B;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Back))
-	{
-		info.code = Input::B;
-	}
-	else if (g_gamepad->isPress(GamePad::Button_Menu))
-	{
-		info.code = Input::C;
-		info.isDown =1;
-	}
-	else if (g_gamepad->isJustPress(GamePad::Button_Menu))
-	{
-		info.code = Input::C;
-	}
-
-
-	if (info.code!=Input::None)
-	{
-		pthread_mutex_lock(&s_input_codelist_mutex);
-		if (!info.isDown || 
-			(Input::getInstance()->getKeyStatus(info.code) != Input::Button_State_Down && Input::getInstance()->getKeyStatus(info.code) != Input::Button_State_Just_Down))
-		{
-			Input::getInstance()->pushkey(info);
-		}
-		
-		pthread_mutex_unlock(&s_input_codelist_mutex);
-	}
-	
 }
 
 string SceneMain::writeablePath;

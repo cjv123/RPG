@@ -381,7 +381,7 @@ int Tilemap::handler_method_release( int ptr1,void* ptr2 )
 	{
 		sps->at(i)->removeFromParentAndCleanup(true);
 	}
-
+	delete sps;
 	return 0;
 }
 

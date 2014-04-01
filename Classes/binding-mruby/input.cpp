@@ -177,7 +177,15 @@ int Input::dir8Value()
 	return 0;
 }
 
-Input::Button_Status_Type Input::getKeyStatus( ButtonCode code )
+int Input::getKeyStatus( ButtonCode code )
 {
-	return m_buttonStateMap[code];
+	list<ButtonListStruct>::iterator it = m_buttonCodeList.begin();
+	for (;it!=m_buttonCodeList.end();it++)
+	{
+		if (it->code == code && it->isDown)
+		{
+			return 1;
+		}
+	}
+	return 0;
 }

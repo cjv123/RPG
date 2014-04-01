@@ -37,12 +37,13 @@ private:
 
 	virtual void composite();
 	
+	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_set_srcrect(int prt1,void* ptr2);
 	static int handler_method_set_bitmap(int ptr1,void* prt2);
 	static int handler_method_composite(int ptr1,void* ptr2);
 	static int handler_method_release(int ptr1,void* ptr2);
 
-	CCClippingNode* m_clippingNode;
+	vector<CCSprite*> m_sprites;
 };
 
 #endif // PLANE_H

@@ -305,10 +305,11 @@ MRB_METHOD(string_gsub2)
 	{
 		return mrb_nil_value();
 	}
-	
+
+
 	if(RSTRING_LEN(self)<findret.size())
 	{
-		RSTRING_PTR(self) = (char*)mrb_malloc(mrb,findret.size()+1);
+		mrb_str_resize(mrb,self,findret.size());
 	}
 	strcpy(RSTRING_PTR(self),findret.c_str());
 

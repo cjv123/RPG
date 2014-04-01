@@ -1,7 +1,7 @@
 APPNAME="RMXP_runner"
 
 # options
-NDK_ROOT="E:\Android\android-ndk-r8d"
+NDK_ROOT="F:\android-ndk-r9c"
 
 buildexternalsfromsource=
 
@@ -65,6 +65,9 @@ if [ -f "$file" ]; then
     cp "$file" "$APP_ANDROID_ROOT"/assets
 fi
 done
+
+chgrp Users -R "$APP_ANDROID_ROOT"/assets/*
+chmod 600 -R "$APP_ANDROID_ROOT"/assets/*
 
 # run ndk-build
 if [[ "$buildexternalsfromsource" ]]; then

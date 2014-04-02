@@ -544,6 +544,7 @@ int Window::handler_method_release( int ptr1,void* ptr2 )
 
 	if (contentNode)
 	{
+
 		contentNode->removeFromParentAndCleanup(true);
 	}
 

@@ -48,7 +48,7 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* image)
 		sp = CCSprite::create();
 		sp->setContentSize(CCSizeMake(bitmap->m_width,bitmap->m_height));
 	}
-	sp->getTexture()->setAliasTexParameters();
+	//sp->getTexture()->setAliasTexParameters();
 	sp->retain();
 	bitmap->m_emuBitmap = sp;
 	
@@ -349,13 +349,21 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		bitmap->m_fontRender = fontRender;
 		fontRender->retain();
 		firstdraw = true;
-		fontRender->getSprite()->getTexture()->setAliasTexParameters();
+		//fontRender->getSprite()->getTexture()->setAliasTexParameters();
 	}
 
 	DrawtextStruct* ptr2struct = (DrawtextStruct*)ptr2;
+	string tmpdrawchar = ptr2struct->str;
+// 	int checknum = atoi(tmpdrawchar.c_str());
+// 	if (checknum!=0)
+// 	{
+// 		char tmp[20]={0};
+// 		sprintf(tmp,"%d",checknum);
+// 		tmpdrawchar = tmp;
+// 	}
 
-	CCLabelTTF* label = CCLabelTTF::create(ptr2struct->str.c_str(),ptr2struct->font->getName(),ptr2struct->font->getSize());
-	label->getTexture()->setAliasTexParameters();
+	CCLabelTTF* label = CCLabelTTF::create(tmpdrawchar.c_str(),ptr2struct->font->getName(),ptr2struct->font->getSize());
+	//label->getTexture()->setAliasTexParameters();
 	if (ptr2struct->font)
 	{
 		Font* f = ptr2struct->font; 
@@ -689,16 +697,12 @@ IntRect Bitmap::textSize(const char *str)
 	
 	unsigned long s=0;
 	unsigned char* fpbuf = CCFileUtils::sharedFileUtils()->getFileData("fonts/arial.ttf","rb",&s);
+	CCAssert(s,"fuck");
 	PFontFreetype fp = create_font_freetype_buf((const char*)fpbuf,s,p->font->getSize(),0);
 	freetype2_gettextsize(fp,str,strlen(str),0,&w,&h,&interval);
 	IntRect rect(0,0,w,h);
 	freetype2_destroyfont(fp);
 	delete [] fpbuf;
-
-// 	CCImage* image = new CCImage;
-// 	image->initWithString(str,0,0,CCImage::kAlignLeft,p->font->getName(),p->font->getSize());
-// 	IntRect rect(0,0,image->getWidth(),image->getHeight());
-// 	delete image;
 
 	return rect;
 }

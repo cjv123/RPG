@@ -318,11 +318,27 @@ int Tilemap::handler_method_setox( int ptr1,void* ptr2 )
 	Vec2i* pos = (Vec2i*)ptr2;
 	CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
 	int clipperH = clipper->getContentSize().height;
+
+	Viewport* viewport = tilemap->p->viewport;
+	CCRect screenrect = CCRectMake(viewport->getRect()->x,
+		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
+		viewport->getRect()->width,
+		viewport->getRect()->height
+		);
+
 	for (int i=0;i<tilemap->m_tiles.size();i++)
 	{
 		Tile tile = tilemap->m_tiles[i];
 		CCSprite* tilesp = tile.sp;
 		tilesp->setPositionX(tile.pos.x-pos->x);
+
+		if (!screenrect.intersectsRect(tilesp->boundingBox()))
+			tilesp->setVisible(false);
+		else
+		{
+			tilesp->setVisible(true);
+			tilemap->orderTileZ(tilesp,tile.x,tile.y,tile.z);
+		}
 	}
 	delete pos;
 	return 0;
@@ -331,6 +347,14 @@ int Tilemap::handler_method_setox( int ptr1,void* ptr2 )
 int Tilemap::handler_method_setoy( int ptr1,void* ptr2 )
 {
 	Tilemap* tilemap = (Tilemap*)ptr1;
+
+	Viewport* viewport = tilemap->p->viewport;
+	CCRect screenrect = CCRectMake(viewport->getRect()->x,
+		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
+		viewport->getRect()->width,
+		viewport->getRect()->height
+		);
+
 	Vec2i* pos = (Vec2i*)ptr2;
 	CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
 	int clipperH = clipper->getContentSize().height;
@@ -339,7 +363,15 @@ int Tilemap::handler_method_setoy( int ptr1,void* ptr2 )
 		Tile tile = tilemap->m_tiles[i];
 		CCSprite* tilesp = tile.sp;
 		tilesp->setPositionY( rgss_y_to_cocos_y(tile.pos.y-pos->y,clipperH));
-		tilemap->orderTileZ(tilesp,tile.x,tile.y,tile.z);
+		
+
+		if (!screenrect.intersectsRect(tilesp->boundingBox()))
+			tilesp->setVisible(false);
+		else
+		{
+			tilesp->setVisible(true);
+			tilemap->orderTileZ(tilesp,tile.x,tile.y,tile.z);
+		}
 	}
 	delete pos;
 	return 0;
@@ -425,6 +457,13 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 	if(NULL == autoTilsetSp)
 		return;
 
+	Viewport* viewport = tilemap->p->viewport;
+	CCRect screenrect = CCRectMake(viewport->getRect()->x,
+		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
+		viewport->getRect()->width,
+		viewport->getRect()->height
+		);
+
 	const StaticRect *pieceRect = &autotileRects[subInd*4];
 	for (int i = 0; i < 4; ++i)
 	{
@@ -457,7 +496,15 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 			CCAnimate* animate = CCAnimate::create(animation);
 			tilesp->runAction(CCRepeatForever::create(animate));
 		}
-		tilemap->orderTileZ(tilesp,x,y,z);
+		
+
+		CCRect sprect = tilesp->boundingBox();
+		if (!screenrect.intersectsRect(sprect))
+		{
+			tilesp->setVisible(false);
+		}
+		else
+			tilemap->orderTileZ(tilesp,x,y,z);
 	}
 	
 }
@@ -477,6 +524,12 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	CCClippingNode* clipper = viewport->getClippingNode();
 	if (!clipper)
 		return -1;
+
+	CCRect screenrect = CCRectMake(viewport->getRect()->x,
+		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
+		viewport->getRect()->width,
+		viewport->getRect()->height
+		);
 
 	for (int x = 0; x < mapWidth; ++x)
 	{	
@@ -513,7 +566,14 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,clipper->getContentSize().height)));
 				Tile tile = {Vec2i(x*tileW,y*tileW),tilesp,x,y,z};
 				tilemap->m_tiles.push_back(tile);
-				tilemap->orderTileZ(tilesp,x,y,z);
+			
+				if (!screenrect.intersectsRect(tilesp->boundingBox()))
+				{
+					tilesp->setVisible(false);
+				}
+				else
+					tilemap->orderTileZ(tilesp,x,y,z);
+				
 			}
 		}
 	}

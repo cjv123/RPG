@@ -479,6 +479,7 @@ MRB_METHOD(string_slice2)
 	return mrb_str_new_cstr(mrb,ret_str);
 }
 
+
 void kernelBindingInit(mrb_state *mrb)
 {
 	RClass *module = mrb->kernel_module;

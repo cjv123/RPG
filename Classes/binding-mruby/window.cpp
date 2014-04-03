@@ -7,6 +7,7 @@
 #include "../ThreadHandlerManager.h"
 #include "SceneMain.h"
 
+#define BORDER_TAG 1000
 
 template<typename T>
 struct Sides
@@ -150,6 +151,7 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 
 	window->m_contentNode = CCNodeRGBA::create();
 	window->m_contentNode->setCascadeColorEnabled(true);
+	//window->m_contentNode->setCascadeOpacityEnabled(true);
 	window->m_contentNode->setAnchorPoint(ccp(0,0));
 	window->m_contentNode->setPosition(ccp(-1000,-1000));
 	window->m_contentNode->retain();
@@ -289,8 +291,25 @@ int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 		window->m_contentNode->setVisible((bool)value);
 		break;
 	case SetPropStruct::opacity:
-		window->m_winNode->setOpacity(value);
-		break;
+		{
+			window->m_winNode->setOpacity(value);
+			CCSprite* bordersp = (CCSprite*)window->m_winNode->getChildByTag(BORDER_TAG);
+			if (bordersp)
+			{
+				bordersp->setOpacity(value);
+			}
+			CCRenderTexture* fontRender = window->p->contents->getRenderTexture();
+			if (fontRender)
+			{
+				CCSprite* sp = fontRender->getSprite();
+				sp->setOpacity(value);
+				fontRender->clear(0,0,0,0);
+				fontRender->begin();
+				sp->visit();
+				fontRender->end();
+			}
+			break;
+		}
 	case SetPropStruct::back_opacity:
 		if (window->m_winsp)
 		{
@@ -571,7 +590,7 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	if (NULL==window->m_winNode)
 		return -1;
 
-	CCNode* winnode = window->m_winNode;
+	CCNodeRGBA* winnode = window->m_winNode;
 	winnode->removeAllChildrenWithCleanup(true);
 	winnode->setContentSize(CCSizeMake(window->p->size.x,window->p->size.y));
 	winnode->setAnchorPoint(ccp(0,1));
@@ -605,12 +624,15 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	masklayer->visit();
 	renderTexture->end();
 	CCSprite* borderf = CCSprite::createWithTexture(renderTexture->getSprite()->getTexture());
+	borderf->setTag(BORDER_TAG);
 	winnode->addChild(borderf);
 	borderf->setAnchorPoint(ccp(0,0));
+	winnode->setOpacity(window->p->opacity);
 
 	CCNodeRGBA* contentNode = window->m_contentNode;
 	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
 	contentNode->setPosition(ccp(winnode->getPositionX()+16,winnode->getPositionY() - winnode->getContentSize().height+16));
+	contentNode->setOpacity(window->p->contentsOpacity);
 
 	handler_method_set_content( (int)window,(void*)0);
 	handler_method_set_cursor_rect((int)window,(void*)0);

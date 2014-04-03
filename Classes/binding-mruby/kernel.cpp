@@ -307,7 +307,7 @@ MRB_METHOD(string_gsub2)
 	}
 
 
-	if(RSTRING_LEN(self)<findret.size())
+	if(RSTRING_LEN(self)!=findret.size())
 	{
 		mrb_str_resize(mrb,self,findret.size());
 	}
@@ -365,7 +365,7 @@ MRB_METHOD(string_sub2)
 	}
 	char* self_str = mrb_string_value_ptr(mrb,self);
 
-	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, self);
+	mrb_value matchdata = mrb_funcall(mrb, match_expr, "match", 1, mrb_str_new_cstr(mrb,self_str));
 	if(mrb_nil_p(matchdata))
 		return mrb_nil_value();
 
@@ -374,11 +374,30 @@ MRB_METHOD(string_sub2)
 	char findchar[1024]={0};
 	strncpy(findchar,RSTRING_PTR(regchar),RSTRING_LEN(regchar));
 
-	mrb_value blockret = mrb_yield(mrb,block,regchar);
-	char* ret_str = RSTRING_PTR(blockret);
+	char* ret_str = NULL;
+	if (!mrb_nil_p(block))
+	{
+		mrb_value blockret = mrb_yield(mrb,block,regchar);
+		ret_str = RSTRING_PTR(blockret);
+	}
+	else
+	{
+		ret_str = RSTRING_PTR(replace_expr);
+	}
+	
+	string selfstr = self_str;
+	int pos = selfstr.find(findchar);
+	if (pos!=1)
+	{
+		selfstr.replace(pos,RSTRING_LEN(regchar),ret_str);
+	}
 
-	char* findret = strstr(self_str,findchar);
-	memcpy(findret,ret_str,RSTRING_LEN(regchar));
+	if(RSTRING_LEN(self)!=selfstr.size())
+	{
+		mrb_str_resize(mrb,self,selfstr.size());
+	}
+	
+	strcpy(RSTRING_PTR(self),selfstr.c_str());
 
 	return self;
 }
@@ -497,7 +516,7 @@ void kernelBindingInit(mrb_state *mrb)
 	mrb_define_method(mrb, mrb->string_class, "gsub", string_gsub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
 	mrb_define_method(mrb, mrb->string_class, "gsub!", string_gsub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
 	mrb_define_method(mrb, mrb->string_class, "sub", string_sub, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
-	mrb_define_method(mrb, mrb->string_class, "sub2", string_sub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
+	mrb_define_method(mrb, mrb->string_class, "sub!", string_sub2, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1) | MRB_ARGS_BLOCK());
 	mrb_define_method(mrb, mrb->string_class, "split", string_split, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, mrb->string_class, "scan", string_scan, MRB_ARGS_REQ(1) | MRB_ARGS_BLOCK());
 	mrb_define_method(mrb, mrb->string_class, "slice!",string_slice2,MRB_ARGS_REQ(2)|MRB_ARGS_OPT(1));

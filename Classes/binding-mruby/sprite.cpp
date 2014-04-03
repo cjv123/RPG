@@ -192,6 +192,8 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 extern pthread_mutex_t s_thread_handler_mutex;
 void Sprite::setBitmap(Bitmap *bitmap)
 {
+	if (bitmap==NULL)
+		return;
 	ThreadHandler hander={handler_method_set_bitmap,(int)this,(void*)bitmap};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	p->srcRect->width = bitmap->width();

@@ -47,6 +47,8 @@ MRB_METHOD(viewportInitialize)
 
 MRB_METHOD(viewportUpdate)
 {
+	Viewport *s = getPrivateData<Viewport>(mrb, self);
+	s->update();
 	return mrb_nil_value();
 }
 

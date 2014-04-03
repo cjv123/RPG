@@ -16,6 +16,7 @@ struct ViewportPrivate
 	Rect *rect;
 
 	Color *color;
+	Color lastcolor;
 	Tone *tone;
 
 	IntRect screenRect;
@@ -34,6 +35,7 @@ struct ViewportPrivate
 		tone(&tmp.tone),
 		isOnScreen(false),ox(0),oy(0),z(0)
 	{
+		lastcolor = *color;
 		rect->set(x,y,width,height);
 		updateRectCon();
 	}
@@ -87,13 +89,17 @@ int Viewport::handler_method_create( int prt1,void* ptr2 )
 	clipper->setPosition(ccp(viewport->getRect()->getX() - viewport->getOX(),
 		rgss_y_to_cocos_y(viewport->getRect()->getY() - viewport->getOY(),SceneMain::getMainLayer()->getContentSize().height)-clipper->getContentSize().height ));
 
+	viewport->m_colorLayer = CCLayerColor::create(ccc4(255,255,255,255));
+	clipper->addChild(viewport->m_colorLayer);
+	viewport->m_colorLayer->setVisible(false);
+
 	return 0;
 }
 
 
 extern pthread_mutex_t s_thread_handler_mutex;
 
-Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0)
+Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0),m_colorLayer(0)
 {
 	initViewport(x,y,width,height);
 	ThreadHandler hander={handler_method_create,(int)this,(void*)NULL};
@@ -102,7 +108,7 @@ Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0)
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
-Viewport::Viewport(Rect *rect) :m_clippingNode(0)
+Viewport::Viewport(Rect *rect) :m_clippingNode(0),m_colorLayer(0)
 {
 	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
@@ -228,3 +234,44 @@ CCClippingNode* Viewport::getClippingNode()
 {
 	return m_clippingNode;
 }
+
+
+int Viewport::handler_method_setcolor( int ptr1,void* ptr2 )
+{
+	Viewport* viewport = (Viewport*)ptr1;
+
+	if (viewport->m_colorLayer && viewport->p->color)
+	{
+		double a = (viewport->p->color->alpha<0)?0:viewport->p->color->alpha;
+		double ad = 1-a/255;
+		double r = viewport->p->color->red*ad;
+		double g = viewport->p->color->green*ad;
+		double b = viewport->p->color->blue*ad;
+
+		viewport->m_colorLayer->setColor(ccc3(r,g,b));
+		
+		viewport->m_colorLayer->setOpacity(a);
+		if(a)
+			viewport->m_colorLayer->setVisible(true);
+		else
+			viewport->m_colorLayer->setVisible(false);
+	}
+	return 0;
+}
+
+
+void Viewport::update()
+{
+	if (!(p->color->red == p->lastcolor.red &&
+		p->color->green == p->lastcolor.green &&
+		p->color->blue == p->lastcolor.blue &&
+		p->color->alpha == p->lastcolor.alpha) )
+	{
+		ThreadHandler hander={handler_method_setcolor,(int)this,(void*)NULL};
+		pthread_mutex_lock(&s_thread_handler_mutex);
+		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+		pthread_mutex_unlock(&s_thread_handler_mutex);
+		p->lastcolor = *p->color;
+	}
+}
+

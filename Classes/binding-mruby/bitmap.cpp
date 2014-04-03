@@ -385,7 +385,6 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 		label->setHorizontalAlignment(kCCTextAlignmentRight);
 	else if (ptr2struct->align == Bitmap::Left)
 		label->setHorizontalAlignment(kCCTextAlignmentLeft);
-		
 
 // 	CCLayerColor* masklayer = CCLayerColor::create(ccc4(255,255,255,255));
 // 	masklayer->setContentSize(label->getContentSize());

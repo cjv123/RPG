@@ -33,6 +33,7 @@ public:
 
 	void addDelegate(ViewPortDelegate* delegate);
 	CCClippingNode* getClippingNode();
+	void update();
 private:
 	void initViewport(int x, int y, int width, int height);
 	void geometryChanged();
@@ -46,11 +47,13 @@ private:
 	static int handler_method_create(int prt1,void* ptr2);
 	static int handler_method_composite(int ptr1,void* ptr2);
 	static int handler_method_release(int ptr1,void* ptr2);
+	static int handler_method_setcolor(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
 	friend struct ViewportPrivate;
 	std::vector<ViewPortDelegate*> m_viewPortDelegates;
 	CCClippingNode* m_clippingNode;
+	CCLayerColor* m_colorLayer;
 };
 
 #endif // VIEWPORT_H

@@ -148,6 +148,12 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		return -1;
 	}
 
+	if (sprite->m_sprite)
+	{
+		sprite->m_sprite->removeFromParentAndCleanup(true);
+		sprite->m_sprite = NULL;
+	}
+
 	sprite->p->bitmap = bitmap;
 	if (sprite->p->bitmap->getFilename()!="")
 		sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
@@ -177,7 +183,6 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 	if (sprite->p->color)
 		handler_method_setcolor((int)sprite,NULL);
 	
-
 	Viewport* viewport = sprite->p->viewport;
 	if (NULL!=viewport)
 	{
@@ -237,13 +242,6 @@ void Sprite::setSrcRect(Rect *rect)
 	rect->addDelegate(this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
-
-struct SetPropStruct
-{
-	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible,opacity};
-	SetPropStruct::type prop_type;
-	int value;
-};
 
 int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 {

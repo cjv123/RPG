@@ -128,12 +128,6 @@ void Plane::setBitmap(Bitmap *value)
 
 }
 
-struct SetPropStruct
-{
-	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible,opacity};
-	SetPropStruct::type prop_type;
-	int value;
-};
 
 int Plane::handler_method_set_prop( int ptr1,void* ptr2 )
 {

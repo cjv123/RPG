@@ -7,6 +7,13 @@
 #include "binding-mruby/disposable.h"
 using namespace std;
 
+struct SetPropStruct
+{
+	enum type{x=0,y,z,ox,oy,zx,zy,angle,visible,opacity,back_opacity,contents_opacity};
+	SetPropStruct::type prop_type;
+	int value;
+};
+
 typedef int (*THREAD_HANDLER_FUNC)(int,void*);   
 
 struct ThreadHandler

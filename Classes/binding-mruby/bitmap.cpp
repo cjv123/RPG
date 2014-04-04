@@ -396,6 +396,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	//masklayer->visit();
 	label->visit();
 	fontRender->end();
+	label->release();
 
 	delete ptr2struct;
 	return 0;

@@ -259,13 +259,6 @@ void Window::setContents(Bitmap *value)
 
 }
 
-struct SetPropStruct
-{
-	enum type{x=0,y,z,visible,opacity,back_opacity,contents_opacity};
-	SetPropStruct::type prop_type;
-	int value;
-};
-
 int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 {
 	Window* window = (Window*)ptr1;

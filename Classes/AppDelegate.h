@@ -34,5 +34,20 @@ public:
     virtual void applicationWillEnterForeground();
 };
 
+
+class KeyDelegate : public cocos2d::CCObject, public cocos2d::CCKeypadDelegate
+{
+public:
+	static KeyDelegate* getInstance();
+
+	virtual void keyBackClicked();
+
+	virtual void keyMenuClicked();
+
+private:
+	KeyDelegate();
+	~KeyDelegate();
+};
+
 #endif // _APP_DELEGATE_H_
 

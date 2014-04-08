@@ -45,7 +45,7 @@ bool StateLoading::init()
 
 	engine->initRMXPScript("Data/Scripts.rxdata");
 
-	schedule(schedule_selector(StateLoading::onLoadComplete), 1.2f);
+	schedule(schedule_selector(StateLoading::onLoadComplete), 2.0f);
 
 	return true;
 }

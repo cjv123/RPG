@@ -31,6 +31,8 @@ static IntRect cursorSrc(128, 64, 32, 32);
 
 static IntRect bordersSrc(128,0,64,64);
 
+static IntRect topcurSrc(160,64,16,16);
+
 static IntRect pauseAniSrc[] =
 {
 	IntRect(160, 64, 16, 16),
@@ -149,18 +151,10 @@ int Window::handler_method_create_winnode( int par1,void* par2 )
 	window->m_winNode = CCNodeRGBA::create();
 	SceneMain::getMainLayer()->addChild(window->m_winNode);
 
-	window->m_contentNode = CCNodeRGBA::create();
-	window->m_contentNode->setCascadeColorEnabled(true);
-	//window->m_contentNode->setCascadeOpacityEnabled(true);
-	window->m_contentNode->setAnchorPoint(ccp(0,0));
-	window->m_contentNode->setPosition(ccp(-1000,-1000));
-	window->m_contentNode->retain();
-	SceneMain::getMainLayer()->addChild(window->m_contentNode);
-
 	return 0;
 }
 
-Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0),m_cursorSp(0)
+Window::Window(Viewport *viewport) : m_winNode(0),m_winsp(0),m_contentNode(0),m_cursorSp(0),m_clipper(0),m_top_cur(0),m_bottom_cur(0)
 {
 	p = new WindowPrivate(viewport);
 
@@ -241,7 +235,13 @@ int Window::handler_method_set_content( int ptr1,void* ptr2 )
 		if (!contentsp->getParent())
 			window->m_contentNode->addChild(contentsp);
 		contentsp->setAnchorPoint(ccp(0,1));
+		
+		if (contentsp->getContentSize().height>window->m_contentNode->getContentSize().height)
+		{
+			window->m_contentNode->setContentSize(contentsp->getContentSize());
+		}
 		contentsp->setPosition(ccp(0,rgss_y_to_cocos_y(0,window->m_contentNode->getContentSize().height)));
+		handler_method_showtopcur((int)window,(void*)0);
 	}
 	return 0;
 }
@@ -268,16 +268,18 @@ int Window::handler_method_set_prop( int ptr1,void* ptr2 )
 	{
 	case SetPropStruct::x:
 		window->m_winNode->setPositionX(value);
-		window->m_contentNode->setPositionX(value+16);
+		if(window->m_clipper)
+			window->m_clipper->setPositionX(value+16);
 		break;
 	case SetPropStruct::y:
 		window->m_winNode->setPositionY(rgss_y_to_cocos_y(value,SceneMain::getMainLayer()->getContentSize().height));
-		window->m_contentNode->setPositionY(window->m_winNode->getPositionY()-window->m_winNode->getContentSize().height+16);
+		if(window->m_clipper)
+			window->m_clipper->setPositionY(window->m_winNode->getPositionY()-window->m_winNode->getContentSize().height+16);
 		break;
 	case SetPropStruct::z:
 		//window->m_winNode->setZOrder(window_z_base+value);
 		window->m_winNode->setZOrder(value);
-		window->m_contentNode->setZOrder(value+2);
+		window->m_clipper->setZOrder(value+2);
 		break;
 	case SetPropStruct::visible:
 		window->m_winNode->setVisible((bool)value);
@@ -374,7 +376,7 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 		{
 			cursorSp = CCScale9Sprite::createWithSpriteFrame(
 				CCSpriteFrame::createWithTexture(skipsp->getTexture(),CCRectMake(cursorSrc.x,cursorSrc.y,cursorSrc.w,cursorSrc.h)));
-			window->m_contentNode->addChild(cursorSp,cursor_z);
+			window->m_winNode->addChild(cursorSp,cursor_z);
 			window->m_cursorSp = cursorSp;
 			cursorSp->setAnchorPoint(ccp(0,1));
 			cursorSp->setCapInsets(CCRectMake(1,1,cursorSrc.w-2,cursorSrc.h-2));
@@ -398,7 +400,7 @@ int Window::handler_method_set_cursor_rect( int ptr1,void* ptr2 )
 		}
 
 		cursorSp->setContentSize(CCSizeMake(window->p->cursorRect->width,window->p->cursorRect->height));
-		cursorSp->setPosition(ccp(window->p->cursorRect->x,rgss_y_to_cocos_y(window->p->cursorRect->y,window->m_contentNode->getContentSize().height)));
+		cursorSp->setPosition(ccp(window->p->cursorRect->x+16,rgss_y_to_cocos_y(window->p->cursorRect->y,window->m_clipper->getContentSize().height)+16));
 	}
 	return 0;
 }
@@ -451,12 +453,38 @@ void Window::setHeight(int value)
 	drawWindow();
 }
 
+int Window::handler_method_set_ox( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+	Vec2i* pos = (Vec2i*)ptr2;
+	CCNodeRGBA* contentNode = window->m_contentNode;
+	contentNode->setPositionX(- pos->x);
+	delete pos;
+	return 0;
+}
+
+int Window::handler_method_set_oy( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+	Vec2i* pos = (Vec2i*)ptr2;
+	CCNodeRGBA* contentNode = window->m_contentNode;
+	contentNode->setPositionY(rgss_y_to_cocos_y(- pos->y,window->m_clipper->getContentSize().height));
+	delete pos;
+
+	handler_method_showtopcur((int)window,(void*)0);
+	return 0;
+}
+
 void Window::setOX(int value)
 {
 	if (p->contentsOffset.x == value)
 		return;
 
 	p->contentsOffset.x = value;
+	ThreadHandler hander={handler_method_set_ox,(int)this,new Vec2i(p->contentsOffset.x,p->contentsOffset.y)};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setOY(int value)
@@ -465,6 +493,10 @@ void Window::setOY(int value)
 		return;
 
 	p->contentsOffset.y = value;
+	ThreadHandler hander={handler_method_set_oy,(int)this,new Vec2i(p->contentsOffset.x,p->contentsOffset.y)};
+	pthread_mutex_lock(&s_thread_handler_mutex);
+	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
+	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
 void Window::setOpacity(int value)
@@ -548,16 +580,17 @@ void Window::setVisible(bool value)
 int Window::handler_method_release( int ptr1,void* ptr2 )
 {
 	CCNodeRGBA* winNode = (CCNodeRGBA*)ptr1;
-	CCNodeRGBA* contentNode = (CCNodeRGBA*)ptr2;
+	CCClippingNode* clipper = (CCClippingNode*)ptr2;
 	if (winNode)
 	{
+		winNode->removeAllChildrenWithCleanup(true);
 		winNode->removeFromParentAndCleanup(true);
 	}
 
-	if (contentNode)
+	if (clipper)
 	{
-
-		contentNode->removeFromParentAndCleanup(true);
+		clipper->removeAllChildrenWithCleanup(true);
+		clipper->removeFromParentAndCleanup(true);
 	}
 
 	return 0;
@@ -566,7 +599,7 @@ int Window::handler_method_release( int ptr1,void* ptr2 )
 
 void Window::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)m_winNode,(void*)m_contentNode};
+	ThreadHandler hander={handler_method_release,(int)m_winNode,(void*)m_clipper};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -589,8 +622,28 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	winnode->setAnchorPoint(ccp(0,1));
 	winnode->setPosition(ccp(window->p->position.x,
 		rgss_y_to_cocos_y(window->p->position.y,SceneMain::getMainLayer()->getContentSize().height)));
-	
+
 	CCSprite* skipsp = window->p->windowskin->getEmuBitmap();
+
+	if(window->m_top_cur==NULL)
+	{
+		window->m_top_cur = CCSprite::createWithTexture(skipsp->getTexture(),
+			CCRectMake(topcurSrc.x,topcurSrc.y,topcurSrc.w,topcurSrc.h));
+		window->m_top_cur->setFlipY(true);
+		winnode->addChild(window->m_top_cur,cursor_z);
+		window->m_top_cur->setPosition(ccp(winnode->getContentSize().width/2,winnode->getContentSize().height - 8));
+		window->m_top_cur->setVisible(false);
+	}
+
+	if (window->m_bottom_cur==NULL)
+	{
+		window->m_bottom_cur = CCSprite::createWithTexture(skipsp->getTexture(),
+			CCRectMake(topcurSrc.x,topcurSrc.y,topcurSrc.w,topcurSrc.h));
+		winnode->addChild(window->m_bottom_cur,cursor_z);
+		window->m_bottom_cur->setPosition(ccp(winnode->getContentSize().width/2,8));
+		window->m_bottom_cur->setVisible(false);
+	}
+	
 	CCSprite* winsp = CCSprite::createWithTexture(skipsp->getTexture(),
 		CCRectMake(backgroundSrc.x,backgroundSrc.y,backgroundSrc.w,backgroundSrc.h));
 	winsp->setAnchorPoint(ccp(0,0));
@@ -622,13 +675,35 @@ int Window::handler_method_draw_window( int par1,void* par2 )
 	borderf->setAnchorPoint(ccp(0,0));
 	winnode->setOpacity(window->p->opacity);
 
+	if (window->m_contentNode==NULL)
+	{
+		window->m_contentNode = CCNodeRGBA::create();
+		window->m_contentNode->setCascadeColorEnabled(true);
+	}
+
 	CCNodeRGBA* contentNode = window->m_contentNode;
 	contentNode->setContentSize(CCSizeMake(window->p->size.x-16*2,window->p->size.y-16*2));
-	contentNode->setPosition(ccp(winnode->getPositionX()+16,winnode->getPositionY() - winnode->getContentSize().height+16));
 	contentNode->setOpacity(window->p->contentsOpacity);
+	contentNode->setAnchorPoint(ccp(0,1));
+	contentNode->setPosition(ccp(0,rgss_y_to_cocos_y(0,contentNode->getContentSize().height)));
+
+	if (window->m_clipper == NULL)
+	{
+		window->m_clipper = CCClippingNode::create();
+		CCClippingNode* clipper = window->m_clipper;
+		CCLayerColor* maskLayer = CCLayerColor::create(ccc4(255,255,255,255));
+		clipper->setStencil(maskLayer);
+		maskLayer->setContentSize(contentNode->getContentSize());
+		//maskLayer->setPosition(ccp(0,rgss_y_to_cocos_y(0,clipper->getContentSize().height)-maskLayer->getContentSize().height));
+		clipper->addChild(contentNode);
+		clipper->setPosition(ccp(winnode->getPositionX()+16,winnode->getPositionY() - winnode->getContentSize().height+16));
+		clipper->setContentSize(maskLayer->getContentSize());
+		SceneMain::getMainLayer()->addChild(clipper);
+	}
 
 	handler_method_set_content( (int)window,(void*)0);
 	handler_method_set_cursor_rect((int)window,(void*)0);
+	handler_method_showtopcur((int)window,(void*)0);
 	return 0;
 }
 
@@ -642,5 +717,29 @@ void Window::drawWindow()
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
+}
+
+int Window::handler_method_showtopcur( int ptr1,void* ptr2 )
+{
+	Window* window = (Window*)ptr1;
+
+	if (!(window->m_contentNode && window->m_winNode && window->m_top_cur && window->m_bottom_cur && window->m_clipper))
+	{
+		return -1;
+	}
+	
+	float bottomy =window->m_contentNode->getPositionY() - window->m_contentNode->getContentSize().height;
+	if (bottomy<0)
+		window->m_bottom_cur->setVisible(true);
+	else
+		window->m_bottom_cur->setVisible(false);
+
+	float topy = window->m_contentNode->getPositionY();
+	if (topy>window->m_clipper->getContentSize().height)
+		window->m_top_cur->setVisible(true);
+	else
+		window->m_top_cur->setVisible(false);
+
+	return 0;
 }
 

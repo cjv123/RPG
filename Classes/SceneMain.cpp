@@ -119,10 +119,7 @@ bool SceneMain::init()
 	
 	ThreadHandlerMananger::getInstance();
 
-	m_engine = new RubyEngine;
-	mrb_state* mrb = m_engine->initAll();
-
-	m_engine->initRMXPScript("Data/Scripts.rxdata");
+	m_engine = RubyEngine::getInstance();
 	
 	scheduleUpdate();
 

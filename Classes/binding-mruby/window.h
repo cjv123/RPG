@@ -54,12 +54,18 @@ private:
 	static int handler_method_set_prop(int ptr1,void* ptr2);
 	static int handler_method_set_cursor_rect(int ptr1,void* ptr2);
 	static int handler_method_set_content(int ptr1,void* ptr2);
+	static int handler_method_set_ox(int ptr1,void* ptr2);
+	static int handler_method_set_oy(int ptr1,void* ptr2);
 	static int handler_method_release(int ptr1,void* ptr2);
+	static int handler_method_showtopcur(int ptr1,void* ptr2);
 
 	CCNodeRGBA* m_winNode;
 	CCSprite* m_winsp;
 	CCNodeRGBA* m_contentNode;
 	CCScale9Sprite* m_cursorSp;
+	CCClippingNode* m_clipper;
+	CCSprite* m_top_cur;
+	CCSprite* m_bottom_cur;
 };
 
 #endif // WINDOW_H

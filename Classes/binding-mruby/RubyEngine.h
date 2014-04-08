@@ -15,8 +15,7 @@ using namespace std;
 class RubyEngine
 {
 public:
-	RubyEngine();
-	~RubyEngine();
+	static RubyEngine* getInstance();
 	mrb_state* initAll();
 	mrb_state* initRubyEngine();
 	void initBindingMethod();
@@ -37,7 +36,9 @@ public:
 	bool getRunRMXP();
 private:
 	static void* networkThread(void* data);
-	
+
+	RubyEngine();
+	~RubyEngine();
 
 	mrb_state* m_mrb;
 	bool m_runRMXP;

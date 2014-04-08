@@ -16,6 +16,8 @@ using namespace cocos2d;
 #ifdef WIN32
 #include <Windows.h>
 #endif
+#include "../SceneMain.h"
+#include "../ThreadHandlerManager.h"
 
 extern void etcBindingInit(mrb_state *mrb);
 extern void tableBindingInit(mrb_state *mrb);
@@ -216,7 +218,7 @@ void RubyEngine::initRMXPScript( const char* filename )
 			if (pos!=-1)
 				script.replace(pos,strlen(findstr.c_str()),"unless @item!=nil and $game_party.item_can_use?(@item.id)");
 
-			return;
+			continue;
 		}
 
 		if (m_RMXPScripts[i].name == "Window_Message")
@@ -231,19 +233,53 @@ void RubyEngine::initRMXPScript( const char* filename )
 				else
 					break;
 			}
+			continue;
 		}
+
+		if (m_RMXPScripts[i].name == "Window_Selectable")
+		{
+			string& script = m_RMXPScripts[i].script;
+			string findstr="@index / @column_max";
+			int findpos = 0;
+			while(1)
+			{
+				int pos = script.find(findstr.c_str(),findpos);
+				if (pos!=-1)
+				{
+					script.replace(pos,strlen(findstr.c_str()),"Integer(@index / @column_max)");
+					findpos+=strlen(findstr.c_str());
+				}
+				else
+					break;
+			}
+			continue;
+		}
+		
 	}
 }
 
 static pthread_t s_networkThread;
 pthread_mutex_t s_thread_handler_mutex;
 
+static CCLabelTTF* labelloading = NULL;
 void RubyEngine::runRMXPScript()
 {
+	labelloading = CCLabelTTF::create("Loading...","Arial",28);
+	SceneMain::getMainLayer()->addChild(labelloading);
+	labelloading->setAnchorPoint(ccp(1,0));
+	labelloading->setPosition(ccp(SceneMain::getMainLayer()->getContentSize().width,0));
+
 	m_runRMXP = true;
 	pthread_mutex_init(&s_thread_handler_mutex, NULL);
 	pthread_create(&s_networkThread, NULL, networkThread, (void*)this);
 	pthread_detach(s_networkThread);
+}
+
+int handler_method_removeloading(int ptr1,void* ptr2)
+{
+	CCLabelTTF* label = (CCLabelTTF*)ptr1;
+	label->removeFromParentAndCleanup(true);
+	return 0;
 }
 
 void* RubyEngine::networkThread( void* data )
@@ -253,8 +289,16 @@ void* RubyEngine::networkThread( void* data )
 	int script_cout = engine->m_RMXPScripts.size();
 	for (int i=0;i<script_cout;i++)
 	{
+		if (i == script_cout -1)
+		{
+			ThreadHandler hander={handler_method_removeloading,(int)labelloading,NULL};
+			pthread_mutex_lock(&s_thread_handler_mutex);
+			ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
+			pthread_mutex_unlock(&s_thread_handler_mutex);
+		}
+
 		int ai = mrb_gc_arena_save(engine->m_mrb);
-		CCLOG("run script:%s",engine->m_RMXPScripts[i].name.c_str());
+		//CCLOG("run script:%s",engine->m_RMXPScripts[i].name.c_str());
 		engine->runScript(engine->m_RMXPScripts[i].script.c_str());
 		mrb_gc_arena_restore(engine->m_mrb, ai);
 		engine->checkException();
@@ -283,5 +327,11 @@ RubyEngine::~RubyEngine()
 bool RubyEngine::getRunRMXP()
 {
 	return m_runRMXP;
+}
+
+RubyEngine* RubyEngine::getInstance()
+{
+	static RubyEngine instance;
+	return &instance;
 }
 

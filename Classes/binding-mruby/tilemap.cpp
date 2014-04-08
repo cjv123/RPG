@@ -377,8 +377,6 @@ int Tilemap::handler_method_setoy( int ptr1,void* ptr2 )
 	return 0;
 }
 
-
-
 void Tilemap::setOX(int value)
 {
 	if (value == p->offset.x)

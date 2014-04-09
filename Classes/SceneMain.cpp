@@ -1,6 +1,7 @@
 #include "SceneMain.h"
 #include "ThreadHandlerManager.h"
 #include "binding-mruby/input.h"
+#include "AndroidInterface.h"
 
 #define MAIN_LAYER_TAG 1000
 
@@ -50,6 +51,7 @@ static void key_handler( UINT message,WPARAM wParam, LPARAM lParam )
 }
 #endif
 
+static int firstclick = 1;
 static void handler_gamepad(int isdown,int code)
 {
 	Input::ButtonListStruct info={Input::None,0};
@@ -74,6 +76,12 @@ static void handler_gamepad(int isdown,int code)
 	case GamePad::Button_Back:
 		info.code = Input::B;
 		break;
+	}
+	
+	if (firstclick)
+	{
+		set_adview_visible(0);
+		firstclick = 0;
 	}
 
 	info.isDown = isdown;

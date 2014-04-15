@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="E:/c++/cocos2d-x-2.2.1/project/RPG/proj.android/lib/GoogleAdMobAdsSdk-6.4.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="E:/workspace/cocos2d-x-2.2.1/projects/RMRunner/proj.android/lib/GoogleAdMobAdsSdk-6.4.1.jar"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>

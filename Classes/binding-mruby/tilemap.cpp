@@ -230,12 +230,15 @@ Bitmap *Tilemap::Autotiles::get(int i) const
 	return p->autotiles[i];
 }
 
-Tilemap::Tilemap(Viewport *viewport) :m_clippingNode(0)
+Tilemap::Tilemap(Viewport *viewport) : m_batchNode(NULL)
 {
 	if (viewport == 0)
 	{
 		viewport = new Viewport(0,0,0,0);
 	}
+
+	memset(m_batchNodeAuto,0,sizeof(m_batchNodeAuto));
+
 	p = new TilemapPrivate(viewport);
 	p->autotilesProxy.p = p;
 	p->tilemap = this;
@@ -455,12 +458,22 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 	if(NULL == autoTilsetSp)
 		return;
 
+	CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
+
+	if (tilemap->m_batchNodeAuto[atInd]==0)
+	{
+		tilemap->m_batchNodeAuto[atInd] = CCSpriteBatchNode::createWithTexture(autoTilsetSp->getTexture());
+		clipper->addChild(tilemap->m_batchNodeAuto[atInd]);
+	}
+
 	Viewport* viewport = tilemap->p->viewport;
 	CCRect screenrect = CCRectMake(viewport->getRect()->x,
 		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
 		viewport->getRect()->width,
 		viewport->getRect()->height
 		);
+
+	int prio = tilemap->p->samplePriority(tileInd);
 
 	const StaticRect *pieceRect = &autotileRects[subInd*4];
 	for (int i = 0; i < 4; ++i)
@@ -472,10 +485,11 @@ void Tilemap::handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd)
 		//texRect.y += atInd * autotileH;
 		texRect.x -=0.5;texRect.y-=0.5;texRect.w+=1;texRect.h+=1;
 
-		CCClippingNode* clipper = tilemap->p->viewport->getClippingNode();
-
 		CCSprite* tilesp = CCSprite::createWithTexture(autoTilsetSp->getTexture(),CCRectMake(texRect.x,texRect.y,texRect.w,texRect.h));
-		clipper->addChild(tilesp);
+		if (z==0 && prio<=1)
+			tilemap->m_batchNodeAuto[atInd]->addChild(tilesp);
+		else
+			clipper->addChild(tilesp);
 		tilesp->setAnchorPoint(ccp(0,1));
 		tilesp->setPosition(ccp(posRect.x,rgss_y_to_cocos_y(posRect.y,clipper->getContentSize().height)));
 		Tile tile = {Vec2i(posRect.x,posRect.y),tilesp,x,y,z};
@@ -523,11 +537,18 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	if (!clipper)
 		return -1;
 
+	if (tilemap->m_batchNode == NULL)
+	{
+		tilemap->m_batchNode = CCSpriteBatchNode::createWithTexture(tilesetSp->getTexture());
+		clipper->addChild(tilemap->m_batchNode);
+	}
+
 	CCRect screenrect = CCRectMake(viewport->getRect()->x,
 		rgss_y_to_cocos_y(viewport->getRect()->y,viewport->getRect()->height) - viewport->getRect()->height,
 		viewport->getRect()->width,
 		viewport->getRect()->height
 		);
+
 
 	for (int x = 0; x < mapWidth; ++x)
 	{	
@@ -559,7 +580,10 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 				int tileY = tsInd / 8;
 
 				CCSprite* tilesp = CCSprite::createWithTexture(tilesetSp->getTexture(),CCRectMake(tileX*tileW,tileY*tileW,tileW,tileW));
-				clipper->addChild(tilesp);
+				if (z==0 && prio<=1)
+					tilemap->m_batchNode->addChild(tilesp);
+				else
+					clipper->addChild(tilesp);
 				tilesp->setAnchorPoint(ccp(0,1));
 				tilesp->setPosition(ccp(x*tileW,rgss_y_to_cocos_y(y*tileW,clipper->getContentSize().height)));
 				Tile tile = {Vec2i(x*tileW,y*tileW),tilesp,x,y,z};

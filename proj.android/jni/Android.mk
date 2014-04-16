@@ -16,7 +16,7 @@ LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes \
 $(LOCAL_PATH)/../../mruby/include \
-$(LOCAL_PATH)/../../../../../boost_1_51_0 \
+$(LOCAL_PATH)/../../../../../boost_1_53_0 \
 $(LOCAL_PATH)/../../freetype2 \
 										
 LOCAL_LDLIBS := -L$(LOCAL_PATH)/../deplibs -lfreetype -lmruby

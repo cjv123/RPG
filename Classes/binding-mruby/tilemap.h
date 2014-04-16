@@ -47,7 +47,8 @@ public:
 
 private:
 	TilemapPrivate *p;
-	CCClippingNode* m_clippingNode;
+	CCSpriteBatchNode* m_batchNode;
+	CCSpriteBatchNode* m_batchNodeAuto[7];
 
 	struct Tile
 	{

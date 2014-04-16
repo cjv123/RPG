@@ -32,7 +32,7 @@ import com.google.ads.AdRequest;
 import com.google.ads.AdRequest.ErrorCode;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
-import com.zfteam.rmxprunner.R;
+import com.zfteam.rmxprunner.tonear.R;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

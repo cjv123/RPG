@@ -49,8 +49,9 @@ private:
 	TilemapPrivate *p;
 	CCSpriteBatchNode* m_batchNode;
 	CCSpriteBatchNode* m_batchNodeAuto[7];
-
-	Vec2i m_screenoxy;
+	bool m_isdraw;
+	int m_screenox;
+	int m_screenoy;
 
 	struct Tile
 	{
@@ -59,8 +60,8 @@ private:
 		int x,y,z;
 	};
 	vector<Tile> m_tiles;
+	
 
-	static void drawTile(Tilemap* tilemap,int x,int y,int z,Tile* tile=NULL);
 	static int handler_method_drawMap(int prt1,void* ptr2);
 	static int handler_method_setox(int ptr1,void* ptr2);
 	static int handler_method_setoy(int ptr1,void* ptr2);

@@ -48,27 +48,28 @@ public:
 private:
 	TilemapPrivate *p;
 	CCSpriteBatchNode* m_batchNode;
-	CCSpriteBatchNode* m_batchNodeAuto[7];
 	bool m_isupdate;
 	Vec2i m_screenoxy;
 
 	struct Tile
 	{
 		Vec2i pos;
-		CCSprite* sp;
-		int x,y,z;
+		CCNode* sp[3];
+		int x,y;
 	};
-	vector<Tile> m_tiles;
+	vector<Tile*> m_tiles;
+	vector<Tile*> m_screenTiles;
 
-	static void drawTile(Tilemap* tilemap,int x,int y,int z,Tile* tile=NULL);
+	static void drawTile(Tilemap* tilemap,int x,int y,int z,Tile* tile);
 	static int handler_method_drawMap(int prt1,void* ptr2);
 	static int handler_method_setox(int ptr1,void* ptr2);
 	static int handler_method_setoy(int ptr1,void* ptr2);
-	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd,Tile* tile=NULL);
+	static void handleAutotile(Tilemap* tilemap,int x,int y,int z,int tileInd,Tile* tile);
 	static int handler_method_composite( int ptr1,void* ptr2 );
 	static int handler_method_release(int ptr1,void* ptr2);
 	static int handler_method_update(int ptr1,void* ptr2);
-	void orderTileZ(CCSprite* tilesp,int x,int y,int z);
+	static int handler_method_drawToScreen(int ptr1,void* ptr2);
+	void orderTileZ(CCNode* tilesp,int x,int y,int z);
 
 	void drawMap();
 

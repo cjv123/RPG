@@ -47,6 +47,10 @@ struct SpritePrivate
 	int zy;
 	int angle;
 
+	Color* m_flashColor;
+	int m_flashDuration;
+	CCSprite* m_sprite;
+
 	SpritePrivate()
 	    : bitmap(0),
 	      srcRect(&tmp.rect),
@@ -59,7 +63,7 @@ struct SpritePrivate
 	      isVisible(true),
 	      color(&tmp.color),
 	      tone(&tmp.tone),
-		  viewport(0),x(0),y(0),z(0),ox(0),oy(0),zx(0),zy(0),angle(0)
+		  viewport(0),x(0),y(0),z(0),ox(0),oy(0),zx(0),zy(0),angle(0),m_flashColor(0),m_flashDuration(0),m_sprite(0)
 	{
 
 		updateSrcRectCon();
@@ -97,7 +101,7 @@ struct SpritePrivate
 	}
 };
 
-Sprite::Sprite(Viewport *viewport) : m_flashColor(0),m_flashDuration(0),m_sprite(0)
+Sprite::Sprite(Viewport *viewport)
 {
 	p = new SpritePrivate;
 	p->lastRect = *p->srcRect;
@@ -148,19 +152,19 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		return -1;
 	}
 
-	if (sprite->m_sprite)
+	if (sprite->p->m_sprite)
 	{
-		sprite->m_sprite->removeFromParentAndCleanup(true);
-		sprite->m_sprite = NULL;
+		sprite->p->m_sprite->removeFromParentAndCleanup(true);
+		sprite->p->m_sprite = NULL;
 	}
 
 	sprite->p->bitmap = bitmap;
 	if (sprite->p->bitmap->getFilename()!="")
-		sprite->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
+		sprite->p->m_sprite = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
 	else 
 	{
-		sprite->m_sprite = CCSprite::create();
-		sprite->m_sprite->setContentSize(CCSizeMake(bitmap->width(),bitmap->height()));
+		sprite->p->m_sprite = CCSprite::create();
+		sprite->p->m_sprite->setContentSize(CCSizeMake(bitmap->width(),bitmap->height()));
 	}
 
 	if (bitmap->getRenderTexture())
@@ -168,18 +172,18 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		CCSprite* fontsp = CCSprite::createWithTexture(bitmap->getRenderTexture()->getSprite()->getTexture());
 		fontsp->setAnchorPoint(ccp(0,0));
 		fontsp->setFlipY(true);
-		sprite->m_sprite->addChild(fontsp);
+		sprite->p->m_sprite->addChild(fontsp);
 		fontsp->setPosition(ccp(bitmap->getTextRect().x,rgss_y_to_cocos_y(bitmap->getTextRect().y,bitmap->height())));
 	}
 
-	sprite->m_sprite->setAnchorPoint(ccp(0,1));
-	sprite->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
+	sprite->p->m_sprite->setAnchorPoint(ccp(0,1));
+	sprite->p->m_sprite->setPosition(ccp(0,SceneMain::getMainLayer()->getContentSize().height));
 
 	if (sprite->p->z)
-		sprite->m_sprite->setZOrder(sprite->p->z);
+		sprite->p->m_sprite->setZOrder(sprite->p->z);
 	if (!sprite->p->isVisible)
-		sprite->m_sprite->setVisible(sprite->p->isVisible);
-	sprite->m_sprite->setOpacity(sprite->p->opacity);
+		sprite->p->m_sprite->setVisible(sprite->p->isVisible);
+	sprite->p->m_sprite->setOpacity(sprite->p->opacity);
 	if (sprite->p->color)
 		handler_method_setcolor((int)sprite,NULL);
 	
@@ -189,7 +193,7 @@ int Sprite::handler_method_set_bitmap( int ptr1,void* ptr2 )
 		handler_method_composite((int)sprite,(void*)NULL);
 	}
 	else
-		SceneMain::getMainLayer()->addChild(sprite->m_sprite);
+		SceneMain::getMainLayer()->addChild(sprite->p->m_sprite);
 
 	return 0;
 }
@@ -211,7 +215,7 @@ void Sprite::setBitmap(Bitmap *bitmap)
 int Sprite::handler_method_set_srcrect( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emuBitmap = sprite->m_sprite;
+	CCSprite* emuBitmap = sprite->p->m_sprite;
 	if (NULL != emuBitmap)
 	{
 		Rect* rect = (Rect*)ptr2;
@@ -251,9 +255,9 @@ int Sprite::handler_method_set_prop( int ptr1,void* ptr2 )
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
 
-	if (sprite->m_sprite)
+	if (sprite->p->m_sprite)
 	{
-		CCSprite* emubitmap = sprite->m_sprite;
+		CCSprite* emubitmap = sprite->p->m_sprite;
 		switch (propstruct->prop_type)
 		{
 		case SetPropStruct::x:
@@ -429,7 +433,7 @@ void Sprite::setVisible(bool value)
 int Sprite::handler_method_set_mirror( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emubitmap = sprite->m_sprite;
+	CCSprite* emubitmap = sprite->p->m_sprite;
 	if (NULL != emubitmap)
 	{
 		emubitmap->setFlipX((bool)ptr2);
@@ -450,7 +454,7 @@ void Sprite::setMirror(bool mirrored)
 int Sprite::handler_method_set_opacity( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
-	CCSprite* emubitmap = sprite->m_sprite;
+	CCSprite* emubitmap = sprite->p->m_sprite;
 	if (NULL != emubitmap)
 	{
 		emubitmap->setOpacity((int)ptr2);
@@ -511,7 +515,7 @@ int Sprite::handler_method_release( int ptr1,void* ptr2 )
 /* Disposable */
 void Sprite::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)m_sprite,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)p->m_sprite,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -538,7 +542,7 @@ int Sprite::handler_method_flash( int ptr1,void* ptr2 )
 	float duration = flash_ptr->duration*1.0f/60.0f;
 	if (sprite->p->bitmap)
 	{
-		CCSprite* emubitmap = sprite->m_sprite;
+		CCSprite* emubitmap = sprite->p->m_sprite;
 		CCSprite* pSprite = CCSprite::createWithTexture(emubitmap->getTexture(),emubitmap->getTextureRect());
 		pSprite->setAnchorPoint(ccp(0,0));
 
@@ -573,24 +577,24 @@ int Sprite::handler_method_flash( int ptr1,void* ptr2 )
 
 void Sprite::flash( Color* color,int duration )
 {
-	m_flashColor = color;
-	m_flashDuration = duration;
+	p->m_flashColor = color;
+	p->m_flashDuration = duration;
 }
 
 void Sprite::update()
 {
-	if (m_flashDuration!=0)
+	if (p->m_flashDuration!=0)
 	{
 		Flash_ptr_struct* ptr2 = new Flash_ptr_struct;
-		ptr2->color = m_flashColor;
-		if (m_flashColor==NULL)
+		ptr2->color = p->m_flashColor;
+		if (p->m_flashColor==NULL)
 			ptr2->color = &p->tmp.color;
-		ptr2->duration = m_flashDuration;
+		ptr2->duration = p->m_flashDuration;
 		ThreadHandler hander={handler_method_flash,(int)this,(void*)ptr2};
 		pthread_mutex_lock(&s_thread_handler_mutex);
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
-		m_flashDuration = 0;
+		p->m_flashDuration = 0;
 	}
 
 	if (!(p->color->red == p->lastcolor.red &&
@@ -612,9 +616,9 @@ int Sprite::handler_method_composite( int ptr1,void* ptr2 )
 	Sprite* sprite = (Sprite*)ptr1;
 	Viewport* viewport = sprite->p->viewport;
 
-	if (viewport && viewport->getClippingNode() && sprite->m_sprite)
+	if (viewport && viewport->getClippingNode() && sprite->p->m_sprite)
 	{
-		CCSprite* pSprite = sprite->m_sprite;
+		CCSprite* pSprite = sprite->p->m_sprite;
 		if(!pSprite->getParent())
 			viewport->getClippingNode()->addChild(pSprite);
 		pSprite->setPosition(ccp(sprite->p->x,rgss_y_to_cocos_y(sprite->p->y,viewport->getRect()->height)));
@@ -637,7 +641,7 @@ int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
 {
 	Sprite* sprite = (Sprite*)ptr1;
 
-	if (sprite->m_sprite && sprite->p->color)
+	if (sprite->p->m_sprite && sprite->p->color)
 	{
 		double a = (sprite->p->color->alpha<0)?0:sprite->p->color->alpha;
 		double ad = 1-a/255;
@@ -647,7 +651,7 @@ int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
 		
 		if ( r>0 && g>0 && b>0)
 		{
-			sprite->m_sprite->setColor(ccc3(r,g,b));
+			sprite->p->m_sprite->setColor(ccc3(r,g,b));
 		}
 
 		if(sprite->p->color->red==0 && 
@@ -655,7 +659,7 @@ int Sprite::handler_method_setcolor( int ptr1,void* ptr2 )
 			sprite->p->color->blue==0 && 
 			sprite->p->color->alpha==0)
 		{
-			sprite->m_sprite->setColor(ccc3(255,255,255));
+			sprite->p->m_sprite->setColor(ccc3(255,255,255));
 		}
 		
 		

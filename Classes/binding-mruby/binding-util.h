@@ -104,6 +104,8 @@ getMrbData(mrb_state *mrb)
 		#_Type, \
 		freeInstance<_Type> \
 	}
+	/*freeInstance<_Type> \*/
+	
 
 #define MRB_METHOD_PUB(name) \
 	mrb_value name(mrb_state *mrb, mrb_value self)

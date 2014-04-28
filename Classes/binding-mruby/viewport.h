@@ -50,10 +50,6 @@ private:
 	static int handler_method_setcolor(int ptr1,void* ptr2);
 
 	ViewportPrivate *p;
-	friend struct ViewportPrivate;
-	std::vector<ViewPortDelegate*> m_viewPortDelegates;
-	CCClippingNode* m_clippingNode;
-	CCLayerColor* m_colorLayer;
 };
 
 #endif // VIEWPORT_H

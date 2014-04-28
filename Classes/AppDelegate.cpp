@@ -15,6 +15,8 @@ AppDelegate::~AppDelegate()
 {
 }
 
+extern int g_frame_rate;
+
 bool AppDelegate::applicationDidFinishLaunching() {
     // initialize director
     CCDirector* pDirector = CCDirector::sharedDirector();

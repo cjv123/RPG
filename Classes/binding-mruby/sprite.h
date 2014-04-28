@@ -66,9 +66,7 @@ private:
 
 	virtual void onRectChange();
 
-	Color* m_flashColor;
-	int m_flashDuration;
-	CCSprite* m_sprite;
+
 };
 
 #endif // SPRITE_H

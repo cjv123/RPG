@@ -15,7 +15,14 @@ struct BitmapPrivate
 {
 	Font *font;
 
-	BitmapPrivate()
+	CCSprite* m_emuBitmap;
+	std::string m_filename;
+	float m_width;
+	float m_height;
+	IntRect m_TextRect;
+	CCRenderTexture* m_fontRender;
+
+	BitmapPrivate() : m_emuBitmap(NULL),m_fontRender(0)
 	{
 		font = new Font();
 	}
@@ -40,32 +47,47 @@ int Bitmap::handler_method_create_sprite(int bitmap_instance ,void* image)
 		
 		CCAssert(sp,"fuck! image file error!");
 
-		bitmap->m_width = sp->getContentSize().width;
-		bitmap->m_height = sp->getContentSize().height;
+		bitmap->p->m_width = sp->getContentSize().width;
+		bitmap->p->m_height = sp->getContentSize().height;
 	}
 	else
 	{
 		sp = CCSprite::create();
-		sp->setContentSize(CCSizeMake(bitmap->m_width,bitmap->m_height));
+		sp->setContentSize(CCSizeMake(bitmap->p->m_width,bitmap->p->m_height));
 	}
 	//sp->getTexture()->setAliasTexParameters();
 	sp->retain();
-	bitmap->m_emuBitmap = sp;
+	bitmap->p->m_emuBitmap = sp;
 	
 	delete ccimage;
 	return 0;
 }
 
 extern pthread_mutex_t s_thread_handler_mutex;
-Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL),m_fontRender(0)
+Bitmap::Bitmap(const char *filename) : p(0)
 {
+	p = new BitmapPrivate;
+
 	string* path = new string(filename);
 
 	CCImage* image = new CCImage;
 	string filename_c=*path;
 	if (path->find(".png") == string::npos)
+	{
 		filename_c=*path + ".png";
+		if (filename_c.find("Characters") != string::npos)
+		{
+			int pos = filename_c.find('-');
+			if(pos!=string::npos)
+			{
+				char c = filename_c[pos+1];
+				filename_c[pos+1]=toupper(c);
+			}
+		}
+	}
+
 	bool ret =image->initWithImageFile(filename_c.c_str());
+
 	if (!ret)
 	{
 		filename_c = *path + ".jpg";
@@ -76,60 +98,58 @@ Bitmap::Bitmap(const char *filename) : m_emuBitmap(NULL),m_fontRender(0)
 	{
 		ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)image};
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		m_filename = filename;
-		m_width = image->getWidth();
-		m_height = image->getHeight();
+		p->m_filename = filename_c;
+		p->m_width = image->getWidth();
+		p->m_height = image->getHeight();
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
 	}
 
 
-	p = new BitmapPrivate;
 }
 
-Bitmap::Bitmap(int width, int height) : m_emuBitmap(NULL),m_fontRender(0)
+Bitmap::Bitmap(int width, int height)  : p(0)
 {
-	m_width = width;
-	m_height = height;
+	p = new BitmapPrivate;
+	p->m_width = width;
+	p->m_height = height;
 
 	ThreadHandler hander={handler_method_create_sprite,(int)this,(void*)0};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 
-	p = new BitmapPrivate;
 }
 
-Bitmap::Bitmap(const Bitmap &other): m_emuBitmap(NULL),m_fontRender(0)
+Bitmap::Bitmap(const Bitmap &other) : p(0)
 {
-	m_emuBitmap = other.m_emuBitmap;
 	p = new BitmapPrivate;
+	p->m_emuBitmap = other.p->m_emuBitmap;
 }
 
 Bitmap::~Bitmap()
 {
 	dispose();
-	if (p)
-		delete p;
+
 }
 
 int Bitmap::width() const
 {
-	return m_width;
+	return p->m_width;
 }
 
 int Bitmap::height() const
 {
-	return m_height;
+	return p->m_height;
 }
 
 IntRect Bitmap::rect() const
 {
 	int x=0;int y=0;
-	if (NULL!=m_emuBitmap)
+	if (NULL!=p->m_emuBitmap)
 	{
-		x = m_emuBitmap->getPositionX();
-		y = m_emuBitmap->getPositionY();
+		x = p->m_emuBitmap->getPositionX();
+		y = p->m_emuBitmap->getPositionY();
 	}
 	return IntRect(x, y, width(), height());
 }
@@ -162,7 +182,7 @@ int Bitmap::handler_method_blt( int ptr1,void* ptr2 )
 		CCSprite* sSprite = CCSprite::createWithTexture(srouceTexture,CCRectMake(ptrstr->sourceRect.x,ptrstr->sourceRect.y,ptrstr->sourceRect.w,ptrstr->sourceRect.h));
 		desSprite->addChild(sSprite);
 		sSprite->setAnchorPoint(ccp(0,1));
-		sSprite->setPosition(ccp(ptrstr->desRect.x,rgss_y_to_cocos_y(ptrstr->desRect.y,desbitmap->m_height)));
+		sSprite->setPosition(ccp(ptrstr->desRect.x,rgss_y_to_cocos_y(ptrstr->desRect.y,desbitmap->p->m_height)));
 		sSprite->setOpacity(ptrstr->opacity);
 	}
 
@@ -200,15 +220,15 @@ int Bitmap::handler_method_fill( int ptr1, void* ptr2 )
 	FillRectStruct* ptr2str = (FillRectStruct*)ptr2;
 	Bitmap* bitmap =(Bitmap*)ptr1;
 	
-	if (NULL!=bitmap->m_emuBitmap)
+	if (NULL!=bitmap->p->m_emuBitmap)
 	{
 		Vec4 color = ptr2str->color;
 		CCLayerColor* layerColor = CCLayerColor::create(ccc4(color.x*255,color.y*255,color.z*255,color.w*255));
 		layerColor->setContentSize(CCSizeMake(ptr2str->rect.w,ptr2str->rect.h));
 		layerColor->setAnchorPoint(ccp(0,1));
 		layerColor->ignoreAnchorPointForPosition(false);
-		layerColor->setPosition(ccp(ptr2str->rect.x,rgss_y_to_cocos_y(ptr2str->rect.y,bitmap->m_height)));
-		bitmap->m_emuBitmap->addChild(layerColor);
+		layerColor->setPosition(ccp(ptr2str->rect.x,rgss_y_to_cocos_y(ptr2str->rect.y,bitmap->p->m_height)));
+		bitmap->p->m_emuBitmap->addChild(layerColor);
 	}
 
 	delete ptr2str;
@@ -221,8 +241,8 @@ void Bitmap::fillRect(const IntRect &rect, const Vec4 &color)
 	FillRectStruct* ptr2 = new FillRectStruct;
 	ptr2->rect = rect;
 	ptr2->color = color;
-	if(m_filename=="")
-		m_filename = "rect";
+	if(p->m_filename=="")
+		p->m_filename = "rect";
 	ThreadHandler hander={handler_method_fill,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
@@ -273,11 +293,11 @@ int Bitmap::handler_method_clear( int ptr1,void* ptr2 )
 	Bitmap* bitmap = (Bitmap*)ptr1;
 	if (NULL!= bitmap->getEmuBitmap())
 	{
-		bitmap->m_emuBitmap->removeAllChildrenWithCleanup(true);
-		if (bitmap->m_fontRender)
+		bitmap->p->m_emuBitmap->removeAllChildrenWithCleanup(true);
+		if (bitmap->p->m_fontRender)
 		{
-			bitmap->m_fontRender->release();
-			bitmap->m_fontRender = NULL;
+			bitmap->p->m_fontRender->release();
+			bitmap->p->m_fontRender = NULL;
 		}
 	
 	}
@@ -288,7 +308,7 @@ int Bitmap::handler_method_clear( int ptr1,void* ptr2 )
 
 void Bitmap::clear()
 {
-	if (NULL != m_emuBitmap)
+	if (NULL != p->m_emuBitmap)
 	{
 		ThreadHandler hander={handler_method_clear,(int)this,(void*)NULL};
 		pthread_mutex_lock(&s_thread_handler_mutex);
@@ -336,17 +356,17 @@ struct DrawtextStruct
 int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 {
  	Bitmap* bitmap = (Bitmap*)ptr1;
-	if (NULL==bitmap->m_emuBitmap)
+	if (NULL==bitmap->p->m_emuBitmap)
 		return -1;
 
 	bool firstdraw = false;
-	CCRenderTexture* fontRender = (CCRenderTexture*)bitmap->m_fontRender;
+	CCRenderTexture* fontRender = (CCRenderTexture*)bitmap->p->m_fontRender;
 	if (NULL==fontRender)
 	{
-		fontRender = CCRenderTexture::create(bitmap->m_width,bitmap->m_height);
+		fontRender = CCRenderTexture::create(bitmap->p->m_width,bitmap->p->m_height);
 		bitmap->getEmuBitmap()->addChild(fontRender);
-		fontRender->setPosition(ccp(bitmap->m_width/2,bitmap->m_height/2));
-		bitmap->m_fontRender = fontRender;
+		fontRender->setPosition(ccp(bitmap->p->m_width/2,bitmap->p->m_height/2));
+		bitmap->p->m_fontRender = fontRender;
 		fontRender->retain();
 		firstdraw = true;
 		//fontRender->getSprite()->getTexture()->setAliasTexParameters();
@@ -376,7 +396,7 @@ int Bitmap::handler_method_drawtext( int ptr1,void* ptr2 )
 	}
 	label->setAnchorPoint(ccp(0,1));
 	label->setDimensions(CCSizeMake(ptr2struct->rect.w,ptr2struct->rect.h));
-	label->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->m_height)));
+	label->setPosition(ccp(ptr2struct->rect.x,rgss_y_to_cocos_y(ptr2struct->rect.y,bitmap->p->m_height)));
 	label->setVerticalAlignment(kCCVerticalTextAlignmentCenter);
 
 	if (ptr2struct->align == Bitmap::Center)
@@ -410,7 +430,7 @@ void Bitmap::drawText(const IntRect &rect, const char *str, int align)
 	ptr2->rect = rect;ptr2->str = str;ptr2->align = align;ptr2->font = new Font(*p->font);
 	ThreadHandler hander={handler_method_drawtext,(int)this,(void*)ptr2};
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	m_TextRect = rect;
+	p->m_TextRect = rect;
 	ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 	
@@ -744,30 +764,33 @@ int Bitmap::handler_method_release( int ptr1,void* ptr2 )
 
 void Bitmap::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)m_emuBitmap,(void*)m_fontRender};
+	ThreadHandler hander={handler_method_release,(int)p->m_emuBitmap,(void*)p->m_fontRender};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+
+	if (p)
+		delete p;
 }
 
 CCSprite* Bitmap::getEmuBitmap()
 {
-	return m_emuBitmap;
+	return p->m_emuBitmap;
 }
 
 std::string Bitmap::getFilename()
 {
-	return m_filename;
+	return p->m_filename;
 }
 
 CCRenderTexture* Bitmap::getRenderTexture()
 {
-	return m_fontRender;
+	return p->m_fontRender;
 }
 
 IntRect Bitmap::getTextRect()
 {
-	return m_TextRect;
+	return p->m_TextRect;
 }
 
 

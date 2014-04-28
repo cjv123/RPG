@@ -24,6 +24,8 @@ struct PlanePrivate
 
 	EtcTemps tmp;
 
+	vector<CCSprite*> m_sprites;
+
 	PlanePrivate()
 	    : bitmap(0),
 	      opacity(255),
@@ -94,7 +96,7 @@ int Plane::handler_method_set_bitmap( int ptr1,void* prt2 )
 			int x = i%3-1;
 			int y = i/3-1;
 			CCSprite* sp = CCSprite::createWithTexture(bitmap->getEmuBitmap()->getTexture());
-			plane->m_sprites.push_back(sp);
+			plane->p->m_sprites.push_back(sp);
 			sp->setAnchorPoint(ccp(0,1));
 			sp->setPosition(ccp(x*sp->getContentSize().width*plane->p->zoomX,
 				viewport->getRect()->height-y*sp->getContentSize().height*plane->p->zoomY));
@@ -137,11 +139,11 @@ int Plane::handler_method_set_prop( int ptr1,void* ptr2 )
 	SetPropStruct* propstruct = (SetPropStruct*)ptr2;
 	int value = propstruct->value;
 
-	if (plane->m_sprites.size())
+	if (plane->p->m_sprites.size())
 	{
-		for (int i=0;i<plane->m_sprites.size();i++)
+		for (int i=0;i<plane->p->m_sprites.size();i++)
 		{
-			CCSprite* emubitmap = plane->m_sprites[i];
+			CCSprite* emubitmap = plane->p->m_sprites[i];
 			switch (propstruct->prop_type)
 			{
 			case SetPropStruct::z:
@@ -312,9 +314,9 @@ int Plane::handler_method_release( int ptr1,void* ptr2 )
 void Plane::releaseResources()
 {
 	vector<CCSprite*>* delsps = new vector<CCSprite*>;
-	for (int i=0;i<m_sprites.size();i++)
+	for (int i=0;i<p->m_sprites.size();i++)
 	{
-		delsps->push_back(m_sprites[i]);
+		delsps->push_back(p->m_sprites[i]);
 	}
 	ThreadHandler hander={handler_method_release,(int)delsps,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
@@ -329,11 +331,11 @@ int Plane::handler_method_composite( int ptr1,void* ptr2 )
 	Plane* plane = (Plane*)ptr1;
 	Viewport* viewport = plane->p->viewport;
 
-	if (viewport && viewport->getClippingNode() && plane->m_sprites.size())
+	if (viewport && viewport->getClippingNode() && plane->p->m_sprites.size())
 	{
-		for (int i=0;i<plane->m_sprites.size();i++)
+		for (int i=0;i<plane->p->m_sprites.size();i++)
 		{
-			CCSprite* pSprite = plane->m_sprites[i];
+			CCSprite* pSprite = plane->p->m_sprites[i];
 			if(!pSprite->getParent())
 				viewport->getClippingNode()->addChild(pSprite);
 		}

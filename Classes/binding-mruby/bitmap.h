@@ -108,13 +108,7 @@ private:
 
 	virtual void releaseResources();
 
-	CCSprite* m_emuBitmap;
-	std::string m_filename;
-	float m_width;
-	float m_height;
 	BitmapPrivate *p;
-	IntRect m_TextRect;
-	CCRenderTexture* m_fontRender;
 };
 
 #endif // BITMAP_H

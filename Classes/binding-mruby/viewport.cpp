@@ -28,12 +28,17 @@ struct ViewportPrivate
 	int oy;
 	int z;
 
+	friend struct ViewportPrivate;
+	std::vector<ViewPortDelegate*> m_viewPortDelegates;
+	CCClippingNode* m_clippingNode;
+	CCLayerColor* m_colorLayer;
+
 	ViewportPrivate(int x, int y, int width, int height, Viewport *self)
 	    : self(self),
 		rect(&tmp.rect),
 		color(&tmp.color),
 		tone(&tmp.tone),
-		isOnScreen(false),ox(0),oy(0),z(0)
+		isOnScreen(false),ox(0),oy(0),z(0),m_clippingNode(0),m_colorLayer(0)
 	{
 		lastcolor = *color;
 		rect->set(x,y,width,height);
@@ -72,7 +77,7 @@ int Viewport::handler_method_create( int prt1,void* ptr2 )
 {
 	Viewport* viewport = (Viewport*)prt1;
 	CCClippingNode* clipper = CCClippingNode::create(); 
-	viewport->m_clippingNode = clipper;
+	viewport->p->m_clippingNode = clipper;
 	
 	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
 		clipper->setContentSize(SceneMain::getMainLayer()->getContentSize());
@@ -89,9 +94,9 @@ int Viewport::handler_method_create( int prt1,void* ptr2 )
 	clipper->setPosition(ccp(viewport->getRect()->getX() - viewport->getOX(),
 		rgss_y_to_cocos_y(viewport->getRect()->getY() - viewport->getOY(),SceneMain::getMainLayer()->getContentSize().height)-clipper->getContentSize().height ));
 
-	viewport->m_colorLayer = CCLayerColor::create(ccc4(255,255,255,255));
-	clipper->addChild(viewport->m_colorLayer);
-	viewport->m_colorLayer->setVisible(false);
+	viewport->p->m_colorLayer = CCLayerColor::create(ccc4(255,255,255,255));
+	clipper->addChild(viewport->p->m_colorLayer);
+	viewport->p->m_colorLayer->setVisible(false);
 
 	return 0;
 }
@@ -99,7 +104,7 @@ int Viewport::handler_method_create( int prt1,void* ptr2 )
 
 extern pthread_mutex_t s_thread_handler_mutex;
 
-Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0),m_colorLayer(0)
+Viewport::Viewport(int x, int y, int width, int height) 
 {
 	initViewport(x,y,width,height);
 	ThreadHandler hander={handler_method_create,(int)this,(void*)NULL};
@@ -108,7 +113,7 @@ Viewport::Viewport(int x, int y, int width, int height) :m_clippingNode(0),m_col
 	pthread_mutex_unlock(&s_thread_handler_mutex);
 }
 
-Viewport::Viewport(Rect *rect) :m_clippingNode(0),m_colorLayer(0)
+Viewport::Viewport(Rect *rect)
 {
 	initViewport(rect->x,rect->y,rect->width,rect->height);
 }
@@ -168,7 +173,7 @@ void Viewport::setRect(Rect *value)
 int Viewport::handler_method_composite( int ptr1,void* ptr2 )
 {
 	Viewport* viewport = (Viewport*)ptr1;
-	CCClippingNode* clipper = viewport->m_clippingNode;
+	CCClippingNode* clipper = viewport->p->m_clippingNode;
 
 	if(viewport->getRect()->getWidth()==0 || viewport->getRect()->getHeight()==0)
 		clipper->setContentSize(SceneMain::getMainLayer()->getContentSize());
@@ -216,7 +221,7 @@ int Viewport::handler_method_release( int ptr1,void* ptr2 )
 /* Disposable */
 void Viewport::releaseResources()
 {
-	ThreadHandler hander={handler_method_release,(int)m_clippingNode,(void*)NULL};
+	ThreadHandler hander={handler_method_release,(int)p->m_clippingNode,(void*)NULL};
 	pthread_mutex_lock(&s_thread_handler_mutex);
 	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -227,12 +232,12 @@ void Viewport::releaseResources()
 
 void Viewport::addDelegate( ViewPortDelegate* delegate )
 {
-	m_viewPortDelegates.push_back(delegate);
+	p->m_viewPortDelegates.push_back(delegate);
 }
 
 CCClippingNode* Viewport::getClippingNode()
 {
-	return m_clippingNode;
+	return p->m_clippingNode;
 }
 
 
@@ -240,7 +245,7 @@ int Viewport::handler_method_setcolor( int ptr1,void* ptr2 )
 {
 	Viewport* viewport = (Viewport*)ptr1;
 
-	if (viewport->m_colorLayer && viewport->p->color)
+	if (viewport->p->m_colorLayer && viewport->p->color)
 	{
 		double a = (viewport->p->color->alpha<0)?0:viewport->p->color->alpha;
 		double ad = 1-a/255;
@@ -248,13 +253,13 @@ int Viewport::handler_method_setcolor( int ptr1,void* ptr2 )
 		double g = viewport->p->color->green*ad;
 		double b = viewport->p->color->blue*ad;
 
-		viewport->m_colorLayer->setColor(ccc3(r,g,b));
+		viewport->p->m_colorLayer->setColor(ccc3(r,g,b));
 		
-		viewport->m_colorLayer->setOpacity(a);
+		viewport->p->m_colorLayer->setOpacity(a);
 		if(a)
-			viewport->m_colorLayer->setVisible(true);
+			viewport->p->m_colorLayer->setVisible(true);
 		else
-			viewport->m_colorLayer->setVisible(false);
+			viewport->p->m_colorLayer->setVisible(false);
 	}
 	return 0;
 }

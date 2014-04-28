@@ -27,50 +27,39 @@ void ThreadHandlerMananger::pushHandlerRelease( ThreadHandler& handler )
 void ThreadHandlerMananger::deleteHandler( int instance )
 {
 	list<ThreadHandler>::iterator it = m_HandlerList.begin();
-	for(;it!=m_HandlerList.end();it++)
+	for(;it!=m_HandlerList.end();)
 	{
 		if (it->instance == instance)
 		{
-			m_HandlerList.erase(it);
-			return;
+			it = m_HandlerList.erase(it);
 		}
+		else
+			it++;
 	}
 }
 
 
 void ThreadHandlerMananger::update( float delay )
 {
-	int handlerSize = m_HandlerList.size();
-	if (handlerSize>0)
+	while (m_HandlerList.size()>0)
 	{
-		for (int i=0;i<handlerSize;i++)
-		{
-			ThreadHandler& handler =  m_HandlerList.front();
-			handler.method(handler.ptr1,handler.ptr2);
-			m_HandlerList.pop_front();
-		}
+		ThreadHandler& handler =  m_HandlerList.front();
+		handler.method(handler.ptr1,handler.ptr2);
+		m_HandlerList.pop_front();
 	}
 
-	handlerSize = m_HandlerAudioList.size();
-	if (handlerSize>0)
+	while (m_HandlerAudioList.size()>0)
 	{
-		for (int i=0;i<handlerSize;i++)
-		{
-			ThreadHandler& handler =  m_HandlerAudioList.front();
-			handler.method(handler.ptr1,handler.ptr2);
-			m_HandlerAudioList.pop_front();
-		}
+		ThreadHandler& handler =  m_HandlerAudioList.front();
+		handler.method(handler.ptr1,handler.ptr2);
+		m_HandlerAudioList.pop_front();
 	}
 
-	handlerSize = m_handleReleaseList.size();
-	if (handlerSize>0)
+	while (m_handleReleaseList.size()>0)
 	{
-		for (int i=0;i<handlerSize;i++)
-		{
-			ThreadHandler& handler = m_handleReleaseList.front();
-			handler.method(handler.ptr1,handler.ptr2);
-			m_handleReleaseList.pop_front();
-		}
+		ThreadHandler& handler = m_handleReleaseList.front();
+		handler.method(handler.ptr1,handler.ptr2);
+		m_handleReleaseList.pop_front();
 	}
 }
 

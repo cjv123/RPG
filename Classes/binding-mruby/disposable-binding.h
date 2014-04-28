@@ -27,11 +27,11 @@
 
 #include <string.h>
 #include "../ThreadHandlerManager.h"
+
 template<class C>
 MRB_METHOD(disposableDispose)
 {
 	Disposable *d = getPrivateData<C>(mrb, self);
-
 	d->dispose();
 
 	return mrb_nil_value();

@@ -161,6 +161,15 @@ struct TilemapPrivate
 
 	/* Change watches */
 
+
+	CCSpriteBatchNode* m_batchNode;
+	bool m_isupdate;
+	Vec2i m_screenoxy;
+
+
+	vector<Tilemap::Tile*> m_tiles;
+	vector<Tilemap::Tile*> m_screenTiles;
+
 	TilemapPrivate(Viewport *viewport)
 	    : viewport(viewport),
 	      tileset(0),
@@ -176,7 +185,9 @@ struct TilemapPrivate
 	      buffersDirty(false),
 	      zOrderDirty(false),
 	      flashDirty(false),
-	      tilemapReady(false)
+	      tilemapReady(false),
+		  m_batchNode(NULL),
+		  m_isupdate(false)
 	{
 		memset(autotiles, 0, sizeof(autotiles));
 
@@ -230,7 +241,7 @@ Bitmap *Tilemap::Autotiles::get(int i) const
 	return p->autotiles[i];
 }
 
-Tilemap::Tilemap(Viewport *viewport) : m_batchNode(NULL),m_isupdate(false)
+Tilemap::Tilemap(Viewport *viewport) 
 {
 	if (viewport == 0)
 	{
@@ -246,16 +257,14 @@ Tilemap::Tilemap(Viewport *viewport) : m_batchNode(NULL),m_isupdate(false)
 Tilemap::~Tilemap()
 {
 	dispose();
-
-	delete p;
 }
 
 void Tilemap::update()
 {
-	if (m_isupdate)
+	if (p->m_isupdate)
 	{
 		pthread_mutex_lock(&s_thread_handler_mutex);
-		m_isupdate = false;
+		p->m_isupdate = false;
 		ThreadHandler hander={handler_method_update,(int)this,NULL};
 		ThreadHandlerMananger::getInstance()->pushHandler(hander,this);
 		pthread_mutex_unlock(&s_thread_handler_mutex);
@@ -326,7 +335,7 @@ int Tilemap::handler_method_setox( int ptr1,void* ptr2 )
 	Tilemap* tilemap = (Tilemap*)ptr1;
 	Vec2i* pos = (Vec2i*)ptr2;
 
-	tilemap->m_isupdate = true;
+	tilemap->p->m_isupdate = true;
 	delete pos;
 	return 0;
 }
@@ -336,7 +345,7 @@ int Tilemap::handler_method_setoy( int ptr1,void* ptr2 )
 	Tilemap* tilemap = (Tilemap*)ptr1;
 	Vec2i* pos = (Vec2i*)ptr2;
 
-	tilemap->m_isupdate = true;
+	tilemap->p->m_isupdate = true;
 
 	
 	delete pos;
@@ -375,8 +384,8 @@ int Tilemap::handler_method_release( int ptr1,void* ptr2 )
 
 	for (int i=0;i<sps->size();i++)
 	{
+		sps->at(i)->removeFromParentAndCleanup(true);
 		sps->at(i)->release();
-		//sps->at(i)->removeFromParent();
 	}
 	delete sps;
 
@@ -389,9 +398,9 @@ int Tilemap::handler_method_release( int ptr1,void* ptr2 )
 void Tilemap::releaseResources()
 {
 	vector<CCNode*>* delsps = new vector<CCNode*>;
-	for (int i=0;i<m_tiles.size();i++)
+	for (int i=0;i<p->m_tiles.size();i++)
 	{
-		Tile* tile = m_tiles[i];
+		Tile* tile = p->m_tiles[i];
 		for (int j=0;j<3;j++)
 		{
 			if(tile->sp[j])
@@ -399,12 +408,15 @@ void Tilemap::releaseResources()
 		}
 		delete tile;
 	}
-	m_tiles.clear();
+	p->m_tiles.clear();
 
 	pthread_mutex_lock(&s_thread_handler_mutex);
-	ThreadHandler hander={handler_method_release,(int)delsps,(void*)m_batchNode};
+	ThreadHandler hander={handler_method_release,(int)delsps,(void*)p->m_batchNode};
 	ThreadHandlerMananger::getInstance()->pushHandlerRelease(hander);
 	pthread_mutex_unlock(&s_thread_handler_mutex);
+
+	if(p)
+		delete p;
 }
 
 
@@ -499,10 +511,10 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 	if (!clipper)
 		return -1;
 
-	if (tilemap->m_batchNode == NULL)
+	if (tilemap->p->m_batchNode == NULL)
 	{
-		tilemap->m_batchNode = CCSpriteBatchNode::createWithTexture(tilesetSp->getTexture());
-		clipper->addChild(tilemap->m_batchNode);
+		tilemap->p->m_batchNode = CCSpriteBatchNode::createWithTexture(tilesetSp->getTexture());
+		clipper->addChild(tilemap->p->m_batchNode);
 	}
 	
 	for (int x = 0; x < mapWidth; ++x)
@@ -510,7 +522,7 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 		for (int y = 0; y < mapHeight; ++y)
 		{		
 			Tile* tile = new Tile;
-			tilemap->m_tiles.push_back(tile);
+			tilemap->p->m_tiles.push_back(tile);
 			tile->pos = Vec2i(x*tileW,y*tileW);
 			tile->sp[0]=NULL;tile->sp[1]=NULL;tile->sp[2]=NULL;
 			tile->x = x;tile->y=y;
@@ -520,6 +532,7 @@ int Tilemap::handler_method_drawMap( int ptr1,void* ptr2 )
 			}
 		}
 	}
+	handler_method_drawToScreen(ptr1,ptr2);
 	return 0;
 }
 
@@ -638,18 +651,18 @@ int Tilemap::handler_method_update( int ptr1,void* ptr2 )
 	Viewport* viewport = tilemap->p->viewport;
 
 	int clipperH = clipper->getContentSize().height;
-	int offy = my_abs(tilemap->m_screenoxy.y - tilemap->p->offset.y);
-	int offx = my_abs(tilemap->m_screenoxy.x - tilemap->p->offset.x);
+	int offy = my_abs(tilemap->p->m_screenoxy.y - tilemap->p->offset.y);
+	int offx = my_abs(tilemap->p->m_screenoxy.x - tilemap->p->offset.x);
 
-	if (offx>=tileW || offy>=tileW)
+	if (offx>tileW || offy>tileW)
 	{
 		handler_method_drawToScreen(ptr1,ptr2);
 	}
 	else
 	{
-		for (int i=0;i<tilemap->m_screenTiles.size();i++)
+		for (int i=0;i<tilemap->p->m_screenTiles.size();i++)
 		{
-			Tile* tile = tilemap->m_screenTiles[i];
+			Tile* tile = tilemap->p->m_screenTiles[i];
 			for (int j=0;j<3;j++)
 			{
 				CCNode* tilesp = tile->sp[j];
@@ -678,59 +691,59 @@ int Tilemap::handler_method_drawToScreen( int ptr1,void* ptr2 )
 
 	int clipperH = clipper->getContentSize().height;
 	
-	int col = tilemap->p->offset.x/tileW - 1;
+	int col = tilemap->p->offset.x/tileW - 2;
 	int row = tilemap->p->offset.y/tileW -2;
 	if(col<0) col = 0;
 	if(row<0) row = 0;
-	int maxcol =col+ clipper->getContentSize().width/tileW + 3;
-	int maxrow =row + clipper->getContentSize().height/tileW + 3;
+	int maxcol =col+ clipper->getContentSize().width/tileW + 4;
+	int maxrow =row + clipper->getContentSize().height/tileW + 4;
 	if(maxcol>mapData->xSize()) maxcol = mapData->xSize();
 	if(maxrow>mapData->ySize()) maxrow = mapData->ySize();
 
-	for (int i=0;i<tilemap->m_screenTiles.size();i++)
+	for (int i=0;i<tilemap->p->m_screenTiles.size();i++)
 	{
 		for (int j=0;j<3;j++)
 		{
-			if(tilemap->m_screenTiles[i]->sp[j])
-				tilemap->m_screenTiles[i]->sp[j]->removeFromParentAndCleanup(true);
+			if(tilemap->p->m_screenTiles[i]->sp[j])
+				tilemap->p->m_screenTiles[i]->sp[j]->removeFromParentAndCleanup(true);
 		}
 	}
-	tilemap->m_screenTiles.clear();
+	tilemap->p->m_screenTiles.clear();
 
 	for (int x = col; x < maxcol; ++x)
 	{	
 		for (int y = row; y < maxrow; ++y)
 		{		
-			Tile* tile = tilemap->m_tiles[x*mapHeight+y];
+			Tile* tile = tilemap->p->m_tiles[x*mapHeight+y];
 			for (int z = 0; z < mapDepth; ++z)
 			{
 				CCNode* tilenode = tile->sp[z];
 				if (tilenode)
 				{
 					tilenode->setPosition(ccp(tile->pos.x - tilemap->p->offset.x,rgss_y_to_cocos_y(tile->pos.y - tilemap->p->offset.y,clipper->getContentSize().height)));
-					if(tilenode->getChildrenCount()==0)
-					{
-						int tileInd = mapData->at(x, y, z);
-						int prio = tilemap->p->samplePriority(tileInd);
-						if (z==0 && prio<1)
-						{
-							tilemap->m_batchNode->addChild(tilenode);
-						}
-						else
-							clipper->addChild(tilenode);
-					}
-					else
-						clipper->addChild(tilenode);
+// 					if(tilenode->getChildrenCount()==0)
+// 					{
+// 						int tileInd = mapData->at(x, y, z);
+// 						int prio = tilemap->p->samplePriority(tileInd);
+// 						if (z==0 && prio<1)
+// 						{
+// 							tilemap->p->m_batchNode->addChild(tilenode);
+// 						}
+// 						else
+// 							clipper->addChild(tilenode);
+// 					}
+// 					else
+					clipper->addChild(tilenode);
 					tilemap->orderTileZ(tilenode,tile->x,tile->y,z);
-					tilemap->m_screenTiles.push_back(tile);
+					tilemap->p->m_screenTiles.push_back(tile);
 				}
 				
 			}
 		}
 	}
 
-	tilemap->m_screenoxy.x = tilemap->p->offset.x;
-	tilemap->m_screenoxy.y = tilemap->p->offset.y;
+	tilemap->p->m_screenoxy.x = tilemap->p->offset.x;
+	tilemap->p->m_screenoxy.y = tilemap->p->offset.y;
 
 	return 0;
 }

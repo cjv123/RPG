@@ -14,6 +14,7 @@ class Table;
 
 struct TilemapPrivate;
 
+
 class Tilemap : public Disposable
 {
 public:
@@ -45,20 +46,18 @@ public:
 	DECL_ATTR( OX,         int       )
 	DECL_ATTR( OY,         int       )
 
-private:
-	TilemapPrivate *p;
-	CCSpriteBatchNode* m_batchNode;
-	bool m_isupdate;
-	Vec2i m_screenoxy;
-
 	struct Tile
 	{
 		Vec2i pos;
 		CCNode* sp[3];
 		int x,y;
 	};
-	vector<Tile*> m_tiles;
-	vector<Tile*> m_screenTiles;
+
+	
+private:
+
+
+	TilemapPrivate *p;
 
 	static void drawTile(Tilemap* tilemap,int x,int y,int z,Tile* tile);
 	static int handler_method_drawMap(int prt1,void* ptr2);

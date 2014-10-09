@@ -32,7 +32,7 @@
 #define TYPE_USERDEF 'u'
 #define TYPE_USRMARSHAL 'U'
 #define TYPE_FLOAT 'f'
-//#define TYPE_BIGNUM 'l'
+#define TYPE_BIGNUM 'l'
 #define TYPE_STRING '"'
 //#define TYPE_REGEXP '/'
 #define TYPE_ARRAY '['
@@ -247,6 +247,15 @@ read_fixnum(MarshalContext *ctx)
 	return result;
 }
 
+static int
+read_bignum(MarshalContext* ctx)
+{
+	//兼容一下 bignum 读取6个字节
+	char buf[10] = { 0 };
+	ctx->readData(buf,6);
+	return 0;
+}
+
 static float
 read_float(MarshalContext *ctx)
 {
@@ -268,6 +277,8 @@ read_string(MarshalContext *ctx)
 
 	return gpbuffer;
 }
+
+
 
 static mrb_value
 read_string_value(MarshalContext *ctx)
@@ -517,11 +528,13 @@ read_value(MarshalContext *ctx)
 	case TYPE_FALSE :
 		value = mrb_false_value();
 		break;
-
 	case TYPE_FIXNUM :
 		value = mrb_fixnum_value(read_fixnum(ctx));
 		break;
 
+	case TYPE_BIGNUM :
+		value = mrb_fixnum_value(read_bignum(ctx));
+		break;
 	case TYPE_FLOAT :
 		value = mrb_float_value(mrb, read_float(ctx));
 		ctx->objects.add(value);
@@ -568,7 +581,7 @@ read_value(MarshalContext *ctx)
 	default :
 		CCLOG( "Marshal.load: unsupported value type '%c',gbufsize %d",type,g_buf_size);
 		CCAssert(false,"fuck");
-		exit(0);
+		//exit(0);
 	}
 
 	mrb_gc_arena_restore(mrb, arena);
